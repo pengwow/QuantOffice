@@ -1,5 +1,14 @@
 # 变更日志
 
+## [0.2.1] - 2026-07-09
+
+### 修复
+- **后端启动 `ValueError: the greenlet library is required`**
+  - SQLAlchemy 2.0+ 异步模式将 `greenlet` 列为软依赖（`Required-by: sqlalchemy` 但不保证自动安装）
+  - 显式声明 `greenlet>=3.0` 到 [pyproject.toml](file:///workspace/pyproject.toml) 顶层 `dependencies`
+  - 重新生成 `uv.lock`（greenlet 3.5.3 已锁定为顶层包）与 5 份 `requirements*.txt`
+  - 影响用户：克隆后 `uv sync` 即自动装上 greenlet，无需手动 `pip install greenlet`
+
 ## [0.2.0] - 2026-07-09
 
 ### ⚠️ 重大变更
