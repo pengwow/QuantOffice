@@ -29,6 +29,9 @@ frontend/bun.lockb
 frontend/.env
 frontend/.env.local
 
+# 构建产物（后端静态目录，部署时由 CI 重建）
+quant_office/static/
+
 # 数据（运行时数据目录，与源代码 quant_office/data/ 区分）
 /data/
 *.db

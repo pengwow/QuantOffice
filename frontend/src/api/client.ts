@@ -92,6 +92,25 @@ export const api = {
 
   // ----- 健康检查 -----
   health: () => request<{ status: string; ts: string }>('/health'),
+
+  // ----- 设置 -----
+  listLlmPresets:    () => request<Array<{ key: string; label: string; base_url: string; default_model: string }>>('/settings/llm-presets'),
+  listExchangePresets: () => request<Array<{ key: string; label: string; base_url: string; testnet_base_url: string }>>('/settings/exchange-presets'),
+  getLlm:            () => request<Record<string, unknown>>('/settings/llm'),
+  updateLlm:         (body: Record<string, unknown>) =>
+    request<Record<string, unknown>>('/settings/llm', { method: 'PUT', body: JSON.stringify(body) }),
+  testLlm:           () => request<Record<string, unknown>>('/settings/llm/test', { method: 'POST' }),
+  getExchange:       () => request<Record<string, unknown>>('/settings/exchange'),
+  updateExchange:    (body: Record<string, unknown>) =>
+    request<Record<string, unknown>>('/settings/exchange', { method: 'PUT', body: JSON.stringify(body) }),
+  testExchange:      () => request<Record<string, unknown>>('/settings/exchange/test', { method: 'POST' }),
+  getRisk:           () => request<Record<string, unknown>>('/settings/risk'),
+  updateRisk:        (body: Record<string, unknown>) =>
+    request<Record<string, unknown>>('/settings/risk', { method: 'PUT', body: JSON.stringify(body) }),
+  settingsSnapshot:  () => request<Record<string, unknown>>('/settings/snapshot'),
+
+  // ----- Chat -----
+  chatStatus:        () => request<Record<string, unknown>>('/chat/status'),
 };
 
 export { ApiError };

@@ -20,7 +20,8 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter
 
 from . import __version__
-from .api import agents, backtests, dashboard, reports, risk, strategies, trades
+from .api import agents, backtests, chat, dashboard, reports, risk, strategies, trades
+from .api import settings as settings_api
 from .config import settings
 from .core.agent_scheduler import get_agent_scheduler
 from .core.engine_adapter import get_engine_adapter
@@ -116,6 +117,8 @@ class QuantOfficePlugin(PluginBase):
         self.router.include_router(risk.router)
         self.router.include_router(reports.router)
         self.router.include_router(dashboard.router)
+        self.router.include_router(settings_api.router)
+        self.router.include_router(chat.router)
 
         @self.router.get("/health")
         async def _health() -> Dict[str, Any]:

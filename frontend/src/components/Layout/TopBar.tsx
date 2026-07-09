@@ -1,5 +1,5 @@
 /**
- * TopBar — 顶部面包屑 + 关键指标
+ * TopBar — 页面顶部面包屑 + 关键指标（位于 TopNav 之下）
  */
 
 import { useLocation } from 'react-router-dom';
@@ -8,20 +8,22 @@ import { api } from '@/api/client';
 import styles from './TopBar.module.css';
 
 const TITLES: Record<string, string> = {
-  '/':            '像素办公室',
-  '/dashboard':   '总览仪表盘',
-  '/agents':      'Agent 面板',
-  '/strategies':  '策略管理',
-  '/backtests':   '回测实验室',
-  '/trades':      '成交记录',
-  '/risk':        '风控监控',
-  '/reports':     '报告中心',
+  '/':           '像素办公室',
+  '/dashboard':  '总览仪表盘',
+  '/agents':     'Agent 面板',
+  '/strategies': '策略管理',
+  '/backtests':  '回测实验室',
+  '/trades':     '成交记录',
+  '/risk':       '风控监控',
+  '/reports':    '报告中心',
+  '/chat':       'AI 对话',
+  '/settings':   '系统设置',
 };
 
 export function TopBar() {
   const { pathname } = useLocation();
   const title = TITLES[pathname] ?? 'QuantOffice';
-  const { data } = useQuery({ queryKey: ['dashboard'], queryFn: api.dashboard });
+  const { data } = useQuery({ queryKey: ['dashboard'], queryFn: api.dashboard, refetchInterval: 5_000 });
 
   const dailyPnl = data?.daily_pnl ?? 0;
   const pnlUp = dailyPnl >= 0;

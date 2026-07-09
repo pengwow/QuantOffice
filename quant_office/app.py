@@ -15,13 +15,14 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import AsyncIterator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
-from .api import agents, backtests, dashboard, reports, risk, strategies, trades
+from .api import agents, backtests, chat, dashboard, reports, risk, strategies, trades
+from .api import settings as settings_api
 from .config import settings
 from .core.agent_scheduler import get_agent_scheduler
 from .core.engine_adapter import get_engine_adapter
@@ -94,6 +95,8 @@ def create_app() -> FastAPI:
     app.include_router(risk.router, prefix=api_prefix)
     app.include_router(reports.router, prefix=api_prefix)
     app.include_router(dashboard.router, prefix=api_prefix)
+    app.include_router(settings_api.router, prefix=api_prefix)
+    app.include_router(chat.router, prefix=api_prefix)
 
     # ---- WebSocket ----
     @app.websocket("/ws")
@@ -155,7 +158,25 @@ def create_app() -> FastAPI:
     # ---- 静态资源（前端 Vite 构建产物） ----
     static_dir = settings.resolved_static_dir
     if static_dir.exists():
-        app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
+        # 挂载 /assets 子目录（Vite 构建产物）
+        assets_dir = static_dir / "assets"
+        if assets_dir.exists():
+            app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+        # 根路径直接提供 index.html
+        @app.get("/")
+        async def index() -> FileResponse:
+            return FileResponse(static_dir / "index.html")
+
+        # SPA 兜底：所有非 /api /assets /ws 路径都返回 index.html
+        @app.get("/{full_path:path}", include_in_schema=False)
+        async def spa_fallback(full_path: str) -> FileResponse:
+            # 安全检查：路径里不能有 .. （防止越权）
+            if ".." in full_path or full_path.startswith("api") or full_path.startswith("ws"):
+                raise HTTPException(404, "Not Found")
+            target = static_dir / full_path
+            if target.is_file():
+                return FileResponse(target)
+            return FileResponse(static_dir / "index.html")
     else:
         @app.get("/")
         async def index() -> JSONResponse:
