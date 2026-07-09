@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantOffice — 像素风格量化交易指挥中枢</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pixel-bg: #f0f2f5;
+            --pixel-dark: #2d3436;
+            --pixel-green: #00b894;
+            --pixel-red: #ff7675;
+            --pixel-yellow: #fdcb6e;
+            --pixel-blue: #74b9ff;
+            --pixel-purple: #a29bfe;
+            --pixel-orange: #e17055;
+            --pixel-white: #ffffff;
+            --pixel-gray: #b2bec3;
+            --pixel-light-gray: #dfe6e9;
+            --nav-width: 240px;
+            --panel-width: 320px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--pixel-bg);
+            color: var(--pixel-dark);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* ===== 像素字体工具类 ===== */
+        .pixel-font {
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        /* ===== 主布局 ===== */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ===== 左侧导航栏 ===== */
+        .sidebar {
+            width: var(--nav-width);
+            background: var(--pixel-white);
+            border-right: 4px solid var(--pixel-light-gray);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+
+        .brand {
+            padding: 0 20px 20px;
+            border-bottom: 2px dashed var(--pixel-light-gray);
+            margin-bottom: 10px;
+        }
+
+        .brand h1 {
+            font-size: 18px;
+            color: var(--pixel-dark);
+            margin-bottom: 4px;
+        }
+
+        .brand .subtitle {
+            font-size: 11px;
+            color: var(--pixel-gray);
+        }
+
+        .search-box {
+            margin: 15px 20px;
+            padding: 10px 14px;
+            border: 3px solid var(--pixel-light-gray);
+            border-radius: 0;
+            background: var(--pixel-bg);
+            font-size: 13px;
+            outline: none;
+            width: calc(100% - 40px);
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+
+        .search-box:focus {
+            border-color: var(--pixel-blue);
+        }
+
+        .nav-section {
+            margin-top: 10px;
+        }
+
+        .nav-title {
+            padding: 8px 20px;
+            font-size: 11px;
+            color: var(--pixel-gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+            font-size: 14px;
+        }
+
+        .nav-item:hover {
+            background: var(--pixel-bg);
+            border-left-color: var(--pixel-blue);
+        }
+
+        .nav-item.active {
+            background: var(--pixel-bg);
+            border-left-color: var(--pixel-green);
+            font-weight: 700;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            image-rendering: pixelated;
+        }
+
+        .user-profile {
+            margin-top: auto;
+            padding: 15px 20px;
+            border-top: 2px dashed var(--pixel-light-gray);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--pixel-blue);
+            border: 2px solid var(--pixel-dark);
+            image-rendering: pixelated;
+        }
+
+        /* ===== 中间主内容区 ===== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            height: 60px;
+            background: var(--pixel-white);
+            border-bottom: 4px solid var(--pixel-light-gray);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .pixel-btn {
+            padding: 8px 16px;
+            border: 3px solid var(--pixel-dark);
+            background: var(--pixel-white);
+            cursor: pointer;
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.1s;
+            box-shadow: 4px 4px 0 var(--pixel-dark);
+        }
+
+        .pixel-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--pixel-dark);
+        }
+
+        .pixel-btn.primary {
+            background: var(--pixel-green);
+            color: white;
+        }
+
+        .pixel-btn.danger {
+            background: var(--pixel-red);
+            color: white;
+        }
+
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* ===== 右侧统计面板 ===== */
+        .right-panel {
+            width: var(--panel-width);
+            background: var(--pixel-white);
+            border-left: 4px solid var(--pixel-light-gray);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .panel-section {
+            padding: 20px;
+            border-bottom: 2px dashed var(--pixel-light-gray);
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-card {
+            background: var(--pixel-bg);
+            border: 3px solid var(--pixel-light-gray);
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--pixel-gray);
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+        }
+
+        .stat-value.up { color: var(--pixel-red); }
+        .stat-value.down { color: var(--pixel-green); }
+
+        /* ===== 像素办公室场景 ===== */
+        .office-scene {
+            background: var(--pixel-white);
+            border: 4px solid var(--pixel-dark);
+            box-shadow: 8px 8px 0 rgba(0,0,0,0.15);
+            padding: 30px;
+            position: relative;
+            min-height: 520px;
+            overflow: hidden;
+        }
+
+        .office-title {
+            text-align: center;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--pixel-dark);
+        }
+
+        .isometric-office {
+            position: relative;
+            width: 100%;
+            height: 420px;
+            background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+            border: 2px solid var(--pixel-light-gray);
+            overflow: hidden;
+        }
+
+        /* 地板网格 */
+        .floor-grid {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* 工位 */
+        .desk {
+            position: absolute;
+            width: 100px;
+            height: 60px;
+            background: #dfe6e9;
+            border: 3px solid #b2bec3;
+            box-shadow: 4px 4px 0 rgba(0,0,0,0.1);
+        }
+
+        .desk::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 10px;
+            width: 80px;
+            height: 50px;
+            background: #74b9ff;
+            border: 2px solid #0984e3;
+            opacity: 0.3;
+        }
+
+        .desk-label {
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            font-weight: 700;
+            white-space: nowrap;
+            background: var(--pixel-white);
+            padding: 2px 6px;
+            border: 2px solid var(--pixel-dark);
+        }
+
+        /* 角色占位符 - 像素风格 */
+        .agent-character {
+            position: absolute;
+            width: 32px;
+            height: 40px;
+            image-rendering: pixelated;
+            cursor: pointer;
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+
+        .agent-character:hover {
+            transform: scale(1.2) translateY(-5px);
+            z-index: 20;
+        }
+
+        /* 像素人 */
+        .pixel-person {
+            width: 32px;
+            height: 40px;
+            position: relative;
+        }
+
+        .pixel-person .head {
+            width: 16px;
+            height: 16px;
+            background: var(--skin-color, #fab1a0);
+            border: 2px solid var(--pixel-dark);
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .pixel-person .head::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -2px;
+            width: 20px;
+            height: 8px;
+            background: var(--hair-color, #2d3436);
+            border: 2px solid var(--pixel-dark);
+        }
+
+        .pixel-person .body {
+            width: 20px;
+            height: 16px;
+            background: var(--shirt-color, #74b9ff);
+            border: 2px solid var(--pixel-dark);
+            margin: 2px auto 0;
+            position: relative;
+        }
+
+        .pixel-person .legs {
+            width: 20px;
+            height: 6px;
+            background: var(--pants-color, #636e72);
+            border: 2px solid var(--pixel-dark);
+            margin: 0 auto;
+        }
+
+        /* 状态指示灯 */
+        .status-light {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 0;
+            border: 2px solid var(--pixel-dark);
+            top: -5px;
+            right: -5px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-light.green {
+            background: var(--pixel-green);
+            box-shadow: 0 0 8px var(--pixel-green);
+        }
+
+        .status-light.yellow {
+            background: var(--pixel-yellow);
+            box-shadow: 0 0 8px var(--pixel-yellow);
+        }
+
+        .status-light.red {
+            background: var(--pixel-red);
+            box-shadow: 0 0 8px var(--pixel-red);
+            animation: alertPulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes alertPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.3); }
+        }
+
+        /* 休闲区 */
+        .coffee-machine {
+            position: absolute;
+            width: 30px;
+            height: 40px;
+            background: #e17055;
+            border: 3px solid var(--pixel-dark);
+            top: 20px;
+            left: 20px;
+        }
+
+        .coffee-machine::after {
+            content: '☕';
+            position: absolute;
+            top: 8px;
+            left: 5px;
+            font-size: 14px;
+        }
+
+        .treadmill {
+            position: absolute;
+            width: 50px;
+            height: 20px;
+            background: #a29bfe;
+            border: 3px solid var(--pixel-dark);
+            top: 80px;
+            left: 10px;
+        }
+
+        /* 提示框 */
+        .agent-tooltip {
+            position: fixed;
+            background: var(--pixel-dark);
+            color: white;
+            padding: 12px 16px;
+            border: 3px solid var(--pixel-white);
+            box-shadow: 6px 6px 0 rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+            max-width: 280px;
+            pointer-events: none;
+        }
+
+        .agent-tooltip h4 {
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: var(--pixel-yellow);
+        }
+
+        .agent-tooltip p {
+            font-size: 12px;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+
+        /* ===== 内容页面 ===== */
+        .page-section {
+            display: none;
+        }
+
+        .page-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .info-card {
+            background: var(--pixel-white);
+            border: 4px solid var(--pixel-dark);
+            box-shadow: 6px 6px 0 rgba(0,0,0,0.1);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .info-card h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-card p, .info-card li {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #444;
+        }
+
+        .info-card ul {
+            margin-left: 20px;
+        }
+
+        .highlight-box {
+            background: var(--pixel-bg);
+            border-left: 6px solid var(--pixel-blue);
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        /* Agent 卡片网格 */
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .agent-card {
+            background: var(--pixel-white);
+            border: 4px solid var(--pixel-dark);
+            box-shadow: 6px 6px 0 rgba(0,0,0,0.1);
+            padding: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .agent-card:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 8px 8px 0 rgba(0,0,0,0.15);
+        }
+
+        .agent-card .agent-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .agent-card .agent-icon {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--pixel-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .agent-card h4 {
+            font-size: 15px;
+        }
+
+        .agent-card .agent-role {
+            font-size: 12px;
+            color: var(--pixel-gray);
+        }
+
+        .agent-card .agent-desc {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .agent-card .agent-status {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 2px dashed var(--pixel-light-gray);
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+        }
+
+        .status-badge {
+            padding: 2px 8px;
+            border: 2px solid;
+            font-weight: 700;
+        }
+
+        .status-badge.online {
+            border-color: var(--pixel-green);
+            color: var(--pixel-green);
+            background: rgba(0,184,148,0.1);
+        }
+
+        /* 架构图 */
+        .arch-diagram {
+            background: var(--pixel-white);
+            border: 4px solid var(--pixel-dark);
+            padding: 30px;
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .arch-layer {
+            margin-bottom: 16px;
+            padding: 16px;
+            border: 3px solid var(--pixel-dark);
+            position: relative;
+        }
+
+        .arch-layer-title {
+            position: absolute;
+            top: -12px;
+            left: 16px;
+            background: var(--pixel-white);
+            padding: 0 8px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .arch-components {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .arch-component {
+            padding: 10px 16px;
+            border: 3px solid var(--pixel-dark);
+            background: var(--pixel-bg);
+            font-size: 12px;
+            font-weight: 500;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .arch-arrow {
+            text-align: center;
+            font-size: 20px;
+            color: var(--pixel-gray);
+            margin: 8px 0;
+        }
+
+        /* 数据流动画 */
+        .data-stream {
+            position: absolute;
+            font-size: 10px;
+            color: var(--pixel-green);
+            font-family: monospace;
+            opacity: 0.6;
+            animation: floatUp 3s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            from { transform: translateY(0); opacity: 0.6; }
+            to { transform: translateY(-40px); opacity: 0; }
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .right-panel { display: none; }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 200px; }
+        }
+
+        /* 滚动条像素风格 */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--pixel-light-gray);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--pixel-gray);
+            border: 2px solid var(--pixel-light-gray);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--pixel-dark);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 左侧导航栏 -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h1 class="pixel-font" style="font-size:14px;">QuantOffice</h1>
+                <div class="subtitle">量化交易指挥中枢 v0.1</div>
+            </div>
+
+            <input type="text" class="search-box" placeholder="搜索策略、Agent...">
+
+            <div class="nav-section">
+                <div class="nav-title">功能</div>
+                <div class="nav-item active" data-page="office">
+                    <span>🏢</span> 像素办公室
+                </div>
+                <div class="nav-item" data-page="agents">
+                    <span>🤖</span> Agent 团队
+                </div>
+                <div class="nav-item" data-page="architecture">
+                    <span>⚙️</span> 技术架构
+                </div>
+                <div class="nav-item" data-page="plugin-arch">
+                    <span>🔌</span> 插件架构
+                </div>
+                <div class="nav-item" data-page="axon-engines">
+                    <span>⚡</span> axon_quant 引擎
+                </div>
+                <div class="nav-item" data-page="value">
+                    <span>💡</span> 价值与意义
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">项目</div>
+                <div class="nav-item" data-page="intro">
+                    <span>📋</span> 创意介绍
+                </div>
+                <div class="nav-item" data-page="users">
+                    <span>👥</span> 目标用户
+                </div>
+                <div class="nav-item" data-page="roadmap">
+                    <span>🗓️</span> 开发路线
+                </div>
+            </div>
+
+            <div class="user-profile">
+                <div class="avatar"></div>
+                <div>
+                    <div style="font-size:13px;font-weight:700;">交易员</div>
+                    <div style="font-size:11px;color:var(--pixel-gray);">在线</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 中间主内容 -->
+        <main class="main-content">
+            <div class="top-bar">
+                <div class="page-title" id="pageTitle">🏢 像素风格量化交易办公室</div>
+                <div class="top-actions">
+                    <button class="pixel-btn" onclick="toggleAlert()">🚨 模拟风控警报</button>
+                    <button class="pixel-btn primary" onclick="refreshData()">🔄 刷新数据</button>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- 页面1: 像素办公室 -->
+                <div class="page-section active" id="page-office">
+                    <div class="office-scene">
+                        <div class="office-title">🎯 QuantOffice 虚拟交易大厅</div>
+                        <div class="isometric-office" id="isoOffice">
+                            <div class="floor-grid"></div>
+
+                            <!-- 休闲区 -->
+                            <div class="coffee-machine" title="咖啡机"></div>
+                            <div class="treadmill" title="跑步机"></div>
+
+                            <!-- ChiefTrader 中央 -->
+                            <div class="desk" style="top:180px;left:50%;transform:translateX(-50%);width:120px;background:#ffeaa7;">
+                                <div class="desk-label">ChiefTrader</div>
+                            </div>
+                            <div class="agent-character" style="top:150px;left:50%;transform:translateX(-50%);" data-agent="chief">
+                                <div class="pixel-person">
+                                    <div class="head" style="--skin-color:#fab1a0;--hair-color:#2d3436;"></div>
+                                    <div class="body" style="--shirt-color:#fdcb6e;"></div>
+                                    <div class="legs" style="--pants-color:#2d3436;"></div>
+                                </div>
+                                <div class="status-light green"></div>
+                            </div>
+
+                            <!-- DataAgent 左侧 -->
+                            <div class="desk" style="top:100px;left:80px;background:#74b9ff;">
+                                <div class="desk-label">DataAgent</div>
+                            </div>
+                            <div class="agent-character" style="top:70px;left:115px;" data-agent="data">
+                                <div class="pixel-person">
+                                    <div class="head" style="--skin-color:#ffeaa7;--hair-color:#d63031;"></div>
+                                    <div class="body" style="--shirt-color:#0984e3;"></div>
+                                    <div class="legs" style="--pants-color:#636e72;"></div>
+                                </div>
+                                <div class="status-light green"></div>
+                            </div>
+
+                            <!-- StrategyAgent 左前 -->
+                            <div class="desk" style="top:280px;left:100px;background:#a29bfe;">
+                                <div class="desk-label">StrategyAgent</div>
+                            </div>
+                            <div class="agent-character" style="top:250px;left:135px;" data-agent="strategy">
+                                <div class="pixel-person">
+                                    <div class="head" style="--skin-color:#fab1a0;--hair-color:#6c5ce7;"></div>
+                                    <div class="body" style="--shirt-color:#a29bfe;"></div>
+                                    <div class="legs" style="--pants-color:#2d3436;"></div>
+                                </div>
+                                <div class="status-light yellow"></div>
+                            </div>
+
+                            <!-- RiskAgent 右前 -->
+                            <div class="desk" style="top:280px;right:100px;background:#ff7675;">
+                                <div class="desk-label">RiskAgent</div>
+                            </div>
+                            <div class="agent-character" style="top:250px;right:135px;" data-agent="risk">
+                                <div class="pixel-person">
+                                    <div class="head" style="--skin-color:#ffeaa7;--hair-color:#2d3436;"></div>
+                                    <div class="body" style="--shirt-color:#d63031;"></div>
+                                    <div class="legs" style="--pants-color:#2d3436;"></div>
+                                </div>
+                                <div class="status-light green" id="riskLight"></div>
+                            </div>
+
+                            <!-- ExecutionAgent 右侧 -->
+                            <div class="desk" style="top:100px;right:80px;background:#55efc4;">
+                                <div class="desk-label">ExecutionAgent</div>
+                            </div>
+                            <div class="agent-character" style="top:70px;right:115px;" data-agent="execution">
+                                <div class="pixel-person">
+                                    <div class="head" style="--skin-color:#fab1a0;--hair-color:#00b894;"></div>
+                                    <div class="body" style="--shirt-color:#00b894;"></div>
+                                    <div class="legs" style="--pants-color:#636e72;"></div>
+                                </div>
+                                <div class="status-light green"></div>
+                            </div>
+
+                            <!-- ReportAgent 后区 -->
+                            <div class="desk" style="top:40px;left:50%;transform:translateX(-50%);width:80px;background:#dfe6e9;">
+                                <div class="desk-label">ReportAgent</div>
+                            </div>
+                            <div class="agent-character" style="top:10px;left:50%;transform:translateX(-50%);" data-agent="report">
+                                <div class="pixel-person">
+                                    <div class="head" style="--skin-color:#ffeaa7;--hair-color:#e17055;"></div>
+                                    <div class="body" style="--shirt-color:#e17055;"></div>
+                                    <div class="legs" style="--pants-color:#636e72;"></div>
+                                </div>
+                                <div class="status-light green"></div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:20px;display:flex;gap:16px;flex-wrap:wrap;">
+                            <div class="stat-card" style="flex:1;min-width:140px;">
+                                <div class="stat-label">当前策略数</div>
+                                <div class="stat-value" style="color:var(--pixel-blue);">6</div>
+                            </div>
+                            <div class="stat-card" style="flex:1;min-width:140px;">
+                                <div class="stat-label">今日信号</div>
+                                <div class="stat-value" style="color:var(--pixel-green);">42</div>
+                            </div>
+                            <div class="stat-card" style="flex:1;min-width:140px;">
+                                <div class="stat-label">今日盈亏</div>
+                                <div class="stat-value up" id="pnlValue">+2.34%</div>
+                            </div>
+                            <div class="stat-card" style="flex:1;min-width:140px;">
+                                <div class="stat-label">运行状态</div>
+                                <div class="stat-value" style="color:var(--pixel-green);">正常</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 页面2: Agent团队 -->
+                <div class="page-section" id="page-agents">
+                    <h2 style="margin-bottom:20px;">🤖 1 主 + 5 副 Agent 协作架构</h2>
+                    <div class="agent-grid">
+                        <div class="agent-card">
+                            <div class="agent-header">
+                                <div class="agent-icon" style="background:#fdcb6e;">👑</div>
+                                <div>
+                                    <h4>ChiefTrader</h4>
+                                    <div class="agent-role">首席交易员 / 主 Agent</div>
+                                </div>
+                            </div>
+                            <p class="agent-desc">坐镇办公室中央，统筹全局。接收用户自然语言指令，拆解任务并分发给各副 Agent，汇总执行结果并生成决策建议。</p>
+                            <div class="agent-status">
+                                <span>状态: <span style="color:var(--pixel-green);font-weight:700;">正常</span></span>
+                                <span class="status-badge online">运行中</span>
+                            </div>
+                        </div>
+
+                        <div class="agent-card">
+                            <div class="agent-header">
+                                <div class="agent-icon" style="background:#74b9ff;">📊</div>
+                                <div>
+                                    <h4>DataAgent</h4>
+                                    <div class="agent-role">数据分析师</div>
+                                </div>
+                            </div>
+                            <p class="agent-desc">负责行情数据获取、清洗、特征工程与存储管理。对接交易所 API 与 axon_quant.data 模块，确保数据实时性与准确性。</p>
+                            <div class="agent-status">
+                                <span>状态: <span style="color:var(--pixel-green);font-weight:700;">正常</span></span>
+                                <span class="status-badge online">运行中</span>
+                            </div>
+                        </div>
+
+                        <div class="agent-card">
+                            <div class="agent-header">
+                                <div class="agent-icon" style="background:#a29bfe;">📈</div>
+                                <div>
+                                    <h4>StrategyAgent</h4>
+                                    <div class="agent-role">策略研究员</div>
+                                </div>
+                            </div>
+                            <p class="agent-desc">负责策略开发、参数调优、回测执行与信号生成。基于 axon_quant.strategy 框架运行策略模板，输出买卖信号。</p>
+                            <div class="agent-status">
+                                <span>状态: <span style="color:var(--pixel-yellow);font-weight:700;">回测中</span></span>
+                                <span class="status-badge online">运行中</span>
+                            </div>
+                        </div>
+
+                        <div class="agent-card">
+                            <div class="agent-header">
+                                <div class="agent-icon" style="background:#ff7675;">🛡️</div>
+                                <div>
+                                    <h4>RiskAgent</h4>
+                                    <div class="agent-role">风控官</div>
+                                </div>
+                            </div>
+                            <p class="agent-desc">负责仓位监控、止损止盈、VaR 计算与风险预警。当风险指标触及阈值时，触发警报并自动执行风控策略。</p>
+                            <div class="agent-status">
+                                <span>状态: <span style="color:var(--pixel-green);font-weight:700;">安全</span></span>
+                                <span class="status-badge online">运行中</span>
+                            </div>
+                        </div>
+
+                        <div class="agent-card">
+                            <div class="agent-header">
+                                <div class="agent-icon" style="background:#55efc4;">⚡</div>
+                                <div>
+                                    <h4>ExecutionAgent</h4>
+                                    <div class="agent-role">执行交易员</div>
+                                </div>
+                            </div>
+                            <p class="agent-desc">负责订单拆分、滑点控制、成交确认与对账。对接 axon_quant.execution 模块，确保信号到成交的最短路径。</p>
+                            <div class="agent-status">
+                                <span>状态: <span style="color:var(--pixel-green);font-weight:700;">正常</span></span>
+                                <span class="status-badge online">运行中</span>
+                            </div>
+                        </div>
+
+                        <div class="agent-card">
+                            <div class="agent-header">
+                                <div class="agent-icon" style="background:#e17055;">📑</div>
+                                <div>
+                                    <h4>ReportAgent</h4>
+                                    <div class="agent-role">报告专员</div>
+                                </div>
+                            </div>
+                            <p class="agent-desc">负责绩效归因、报告生成、图表导出与邮件推送。每日收盘后自动生成交易日报，包含夏普比率、最大回撤等核心指标。</p>
+                            <div class="agent-status">
+                                <span>状态: <span style="color:var(--pixel-green);font-weight:700;">空闲</span></span>
+                                <span class="status-badge online">待机</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 页面3: 技术架构 -->
+                <div class="page-section" id="page-architecture">
+                    <h2 style="margin-bottom:20px;">⚙️ 技术架构</h2>
+
+                    <div class="info-card">
+                        <h3>🎯 架构概览</h3>
+                        <p>QuantOffice 采用前后端分离架构，前端基于 <strong>React + Godot WebAssembly</strong> 实现像素风格可视化，后端基于 <strong>FastAPI + Python</strong> 提供高性能 API 与实时数据推送，底层集成 <strong>axon_quant</strong> 量化交易引擎。</p>
+                    </div>
+
+                    <div class="arch-diagram">
+                        <div class="arch-layer" style="border-color:#fdcb6e;">
+                            <div class="arch-layer-title" style="color:#fdcb6e;">用户层 Browser</div>
+                            <div class="arch-components">
+                                <div class="arch-component" style="border-color:#fdcb6e;">React UI Shell</div>
+                                <div class="arch-component" style="border-color:#fdcb6e;">Godot WASM</div>
+                                <div class="arch-component" style="border-color:#fdcb6e;">WebGL 2.0</div>
+                                <div class="arch-component" style="border-color:#fdcb6e;">ECharts</div>
+                            </div>
+                        </div>
+                        <div class="arch-arrow">⬇️ react-godot-bridge 双向通信</div>
+                        <div class="arch-layer" style="border-color:#74b9ff;">
+                            <div class="arch-layer-title" style="color:#74b9ff;">服务层 FastAPI</div>
+                            <div class="arch-components">
+                                <div class="arch-component" style="border-color:#74b9ff;">REST API</div>
+                                <div class="arch-component" style="border-color:#74b9ff;">WebSocket</div>
+                                <div class="arch-component" style="border-color:#74b9ff;">Celery 调度</div>
+                                <div class="arch-component" style="border-color:#74b9ff;">SQLAlchemy</div>
+                            </div>
+                        </div>
+                        <div class="arch-arrow">⬇️ Python SDK 调用</div>
+                        <div class="arch-layer" style="border-color:#a29bfe;">
+                            <div class="arch-layer-title" style="color:#a29bfe;">引擎层 axon_quant</div>
+                            <div class="arch-components">
+                                <div class="arch-component" style="border-color:#a29bfe;">Data</div>
+                                <div class="arch-component" style="border-color:#a29bfe;">Strategy</div>
+                                <div class="arch-component" style="border-color:#a29bfe;">Risk</div>
+                                <div class="arch-component" style="border-color:#a29bfe;">Execution</div>
+                                <div class="arch-component" style="border-color:#a29bfe;">Report</div>
+                            </div>
+                        </div>
+                        <div class="arch-arrow">⬇️ 数据持久化</div>
+                        <div class="arch-layer" style="border-color:#55efc4;">
+                            <div class="arch-layer-title" style="color:#00b894;">数据层</div>
+                            <div class="arch-components">
+                                <div class="arch-component" style="border-color:#55efc4;">PostgreSQL</div>
+                                <div class="arch-component" style="border-color:#55efc4;">Redis</div>
+                                <div class="arch-component" style="border-color:#55efc4;">ClickHouse</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-card" style="margin-top:20px;">
+                        <h3>🔧 关键技术选型</h3>
+                        <ul>
+                            <li><strong>Godot 4.3+</strong>：开源 2D 引擎，原生支持 WebAssembly 导出，文件体积比 Unity WebGL 轻量 50% 以上</li>
+                            <li><strong>react-godot-bridge</strong>：React 与 Godot 的双向事件驱动通信桥，支持 postMessage 跨 iframe 通信</li>
+                            <li><strong>FastAPI</strong>：Python 异步 Web 框架，原生支持 WebSocket 与 Server-Sent Events</li>
+                            <li><strong>axon_quant</strong>：底层量化交易执行引擎，提供数据/策略/风控/执行/报告五大模块</li>
+                            <li><strong>Celery + Redis</strong>：异步任务队列，每个 Agent 对应独立 Worker Pool</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 页面4: 价值与意义 -->
+                <div class="page-section" id="page-value">
+                    <h2 style="margin-bottom:20px;">💡 价值与意义</h2>
+
+                    <div class="info-card">
+                        <h3>📈 效率提升</h3>
+                        <p>QuantOffice 通过"空间隐喻"将抽象的量化交易流程映射为具象的办公室场景，将策略监控效率提升 <strong>40% 以上</strong>。</p>
+                        <div class="highlight-box">
+                            <strong>核心指标改善：</strong><br>
+                            • 策略异常发现时间：5分钟 → <span style="color:var(--pixel-green);font-weight:700;">30秒</span><br>
+                            • 多策略监控窗口：5+ 个 → <span style="color:var(--pixel-green);font-weight:700;">1个浏览器标签页</span><br>
+                            • 新策略上线学习成本：2小时 → <span style="color:var(--pixel-green);font-weight:700;">10分钟</span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>🌍 社会价值</h3>
+                        <p>量化交易长期以来被外界误解为"神秘的赚钱机器"，QuantOffice 的像素办公室设计将量化交易的完整工作流<strong>透明化、游戏化</strong>，大幅降低公众理解门槛。</p>
+                        <div class="highlight-box">
+                            <strong>应用场景：</strong><br>
+                            • <strong>教育培训</strong>：学生通过"观察办公室里的角色在做什么"来学习量化交易全流程<br>
+                            • <strong>投资者教育</strong>：个人投资者可直观了解"我的钱是怎么被管理的"<br>
+                            • <strong>行业透明化</strong>：可视化呈现有助于提升整个量化行业的信任度与普及率
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>🎮 创新亮点</h3>
+                        <ul>
+                            <li><strong>拟物化设计</strong>：参考腾讯 Marvis 的像素办公室，将抽象的多 Agent 协作具象为"看得见的工作场景"</li>
+                            <li><strong>游戏化交互</strong>：点击角色即可下达指令、调整参数，像玩模拟经营游戏一样管理交易策略</li>
+                            <li><strong>回测时间旅行</strong>：支持"回放"历史某一天的策略执行过程，像看电影一样复盘</li>
+                            <li><strong>风险可视化</strong>：RiskAgent 的红灯警报、屏幕闪烁等效果让风险感知从"读数字"变为"看动画"</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 页面5: 创意介绍 -->
+                <div class="page-section" id="page-intro">
+                    <h2 style="margin-bottom:20px;">📋 创意介绍</h2>
+
+                    <div class="info-card">
+                        <h3>🎯 想解决什么问题</h3>
+                        <p>当前量化交易平台的操作界面普遍枯燥、数据堆砌严重，交易员需要在多个终端之间切换，难以直观感知策略执行状态与风险敞口。QuantOffice 将枯燥的量化交易流程转化为可视化的像素风格"虚拟办公室"，让交易员像指挥一支专业团队一样管理量化策略，大幅降低认知负荷与操作门槛。</p>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>💡 灵感来源</h3>
+                        <p>灵感来源于腾讯 <strong>Marvis（马维斯）</strong> 的像素风格多 Agent 办公室设计。马维斯通过"1+5 Agent 协作架构"将系统级 AI 操作具象化为一个虚拟办公场景，每个 Agent 都有独立的工位和可视化状态。</p>
+                        <p>我们认为这种"拟物化 + 游戏化"的设计理念与量化交易场景高度契合——量化交易本身就是多角色协同（数据、策略、风控、执行、报告）的复杂系统，用像素办公室的形式呈现，既能让专业交易员获得沉浸式掌控感，也能让新手快速理解量化交易的全流程。</p>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>📦 产品形态</h3>
+                        <p>QuantOffice 是一款基于 <strong>Godot 引擎</strong> 开发的 2D 像素风格量化交易可视化系统。前端以 React 组件形式嵌入 Godot 导出的 WebAssembly 像素办公室场景，后端采用 <strong>FastAPI + Python</strong> 架构，底层量化执行引擎集成 <strong>axon_quant</strong>。</p>
+                        <p>用户通过浏览器即可访问一个活生生的"量化交易办公室"：首席交易员坐镇中央，数据分析师、策略研究员、风控官、执行交易员、报告专员各司其职，实时显示行情数据、策略状态、风险指标与交易执行进度。</p>
+                    </div>
+                </div>
+
+                <!-- 页面6: 目标用户 -->
+                <div class="page-section" id="page-users">
+                    <h2 style="margin-bottom:20px;">👥 目标用户及痛点</h2>
+
+                    <div class="info-card">
+                        <h3>🎯 核心用户群体</h3>
+                        <ul>
+                            <li><strong>个人量化交易者</strong>：有编程基础，希望降低策略监控成本</li>
+                            <li><strong>小型量化私募团队</strong>（3-10人）：需要轻量级协同与可视化工具</li>
+                            <li><strong>量化交易教育培训机构</strong>：需要直观的教学演示系统</li>
+                            <li><strong>技术爱好者</strong>：对量化交易与游戏化设计感兴趣的开发者</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>📍 使用场景</h3>
+                        <ul>
+                            <li><strong>日常策略监控</strong>：开盘期间实时观察多个策略的运行状态与健康度</li>
+                            <li><strong>策略回测审查</strong>：查看历史回测的绩效报告与可视化分析</li>
+                            <li><strong>风险事件响应</strong>：当风险指标触发阈值时，通过像素办公室的"警报动画"第一时间感知</li>
+                            <li><strong>团队协同复盘</strong>：多人同时在线查看办公室状态，讨论策略调整</li>
+                            <li><strong>量化交易教学</strong>：向学生/客户演示量化交易的完整工作流</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>😣 当前痛点</h3>
+                        <ul>
+                            <li><strong>信息过载</strong>：传统量化终端以文本和表格为主，策略一多就眼花缭乱</li>
+                            <li><strong>缺乏状态感知</strong>：策略运行是"黑盒"，只能看日志判断是否正常</li>
+                            <li><strong>切换成本高</strong>：数据获取、策略编写、回测、风控、下单分散在不同工具中</li>
+                            <li><strong>学习曲线陡峭</strong>：新人难以理解量化交易的全链路流程</li>
+                            <li><strong>情绪隔离</strong>：纯数据界面缺乏"在场感"，长时间监控容易产生疲劳</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 页面7: 开发路线 -->
+                <div class="page-section" id="page-roadmap">
+                    <h2 style="margin-bottom:20px;">🗓️ 开发里程碑</h2>
+
+                    <div class="info-card">
+                        <h3>🚀 Phase 1: 原型验证 (Week 1-2)</h3>
+                        <ul>
+                            <li>Godot 像素办公室基础场景搭建</li>
+                            <li>6 个工位静态布局 + 角色占位</li>
+                            <li>idle / working / alert 三种动画状态设计</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>🔌 Phase 2: 前端集成 (Week 3-4)</h3>
+                        <ul>
+                            <li>React 壳层搭建（导航 + 面板）</li>
+                            <li>Godot WASM 导出与嵌入</li>
+                            <li>react-godot-bridge 双向通信打通</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>⚙️ Phase 3: 后端核心 (Week 5-6)</h3>
+                        <ul>
+                            <li>FastAPI 基础 API 开发</li>
+                            <li>WebSocket 实时数据通道</li>
+                            <li>PostgreSQL 数据模型与迁移</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>🧠 Phase 4: 引擎对接 (Week 7-8)</h3>
+                        <ul>
+                            <li>axon_quant SDK 封装</li>
+                            <li>Agent 异步任务调度（Celery）</li>
+                            <li>端到端回测流程跑通</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>🎨 Phase 5: 可视化联动 (Week 9-10)</h3>
+                        <ul>
+                            <li>Agent 状态 ↔ 像素角色动画联动</li>
+                            <li>风险报警可视化（红灯闪烁 + 屏幕震动）</li>
+                            <li>行情数据 ↔ 办公室屏幕内容联动</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>🚢 Phase 6: 优化上线 (Week 11-12)</h3>
+                        <ul>
+                            <li>性能优化（WASM 加载速度、WebSocket 连接稳定性）</li>
+                            <li>压力测试（50+ 并发连接）</li>
+                            <li>Docker 部署与 CI/CD</li>
+                            <li>文档完善与开源发布</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 页面8: 插件架构 -->
+                <div class="page-section" id="page-plugin-arch">
+                    <h2 style="margin-bottom:20px;">🔌 QuantCell 插件化双模式架构</h2>
+
+                    <div class="info-card">
+                        <h3>🎯 双模式设计目标</h3>
+                        <p>参考 <a href="https://github.com/pengwow/WalletMonitor" target="_blank" style="color:var(--pixel-blue);">WalletMonitor</a> 的双模式设计，QuantOffice 支持<strong>独立运行</strong>和<strong>QuantCell 插件加载</strong>两种模式，两种模式共享 100% 业务逻辑代码。</p>
+                        <div class="highlight-box">
+                            <strong>独立模式：</strong>面向个人交易者，`python run.py` 一键启动完整服务<br>
+                            <strong>插件模式：</strong>面向 QuantCell 生态用户，ZIP 上传或 Git 安装后由 QuantCell 统一管理
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>🏗️ 双模式目录结构</h3>
+                        <pre style="background:var(--pixel-dark);color:#dfe6e9;padding:16px;font-size:11px;line-height:1.6;overflow-x:auto;">
+QuantOffice/
+├── run.py                          # 独立运行入口
+├── manifest.json                   # 插件清单（插件模式必需）
+├── quant_office/
+│   ├── app.py                      # 独立模式：完整 FastAPI 应用工厂
+│   ├── plugin.py                   # 插件模式：PluginBase 子类外壳
+│   ├── core/                       # 核心业务（共享）
+│   │   ├── engine_adapter.py       # axon_quant 适配器
+│   │   ├── agent_scheduler.py      # Agent 调度器
+│   │   ├── websocket_manager.py    # WebSocket 管理
+│   │   └── event_publisher.py      # EventBus 事件发布
+│   ├── agents/                     # Agent 业务逻辑（共享）
+│   ├── api/                        # API 路由（共享）
+│   ├── data/                       # 数据层（共享）
+│   ├── services/                   # 服务层（共享）
+│   └── godot/                      # Godot WASM 导出资源
+├── frontend/
+│   └── src/plugins/quant-office/   # 前端插件入口
+│       ├── index.tsx               # 菜单/路由注册
+│       ├── manifest.json           # 前端插件清单
+│       └── components/             # 插件页面组件
+└── godot_project/                  # Godot 源工程
+                        </pre>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>⚡ 核心设计原则（参考 WalletMonitor）</h3>
+                        <ul>
+                            <li><strong>业务逻辑与框架完全解耦</strong>：core/、agents/、api/、data/ 等模块不依赖任何插件框架代码，两种模式 100% 复用</li>
+                            <li><strong>独立模式提供完整上下文</strong>：app.py 创建完整 FastAPI 应用（CORS、中间件、数据库、根路由、健康检查），路由前缀 <code>/api</code></li>
+                            <li><strong>插件模式仅提供"适配外壳"</strong>：plugin.py 只负责继承 PluginBase、创建 APIRouter(prefix="/api/plugins/quant-office")、复用业务路由</li>
+                            <li><strong>数据隔离</strong>：插件模式使用插件数据目录 <code>backend/plugins/quant-office/data/</code>，避免污染源码目录</li>
+                            <li><strong>配置共享</strong>：config.py、logging_config.py 被两种模式共同使用</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>🔧 双模式运行时差异对比</h3>
+                        <table style="width:100%;font-size:12px;border-collapse:collapse;margin-top:12px;">
+                            <tr style="background:var(--pixel-dark);color:white;">
+                                <th style="padding:8px;border:2px solid var(--pixel-dark);text-align:left;">维度</th>
+                                <th style="padding:8px;border:2px solid var(--pixel-dark);text-align:left;">独立运行模式</th>
+                                <th style="padding:8px;border:2px solid var(--pixel-dark);text-align:left;">QuantCell 插件模式</th>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);font-weight:700;">启动方式</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">python run.py --port 8000</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">放入 backend/plugins/ 自动扫描</td>
+                            </tr>
+                            <tr style="background:var(--pixel-bg);">
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);font-weight:700;">入口文件</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">quant_office/app.py</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">quant_office/plugin.py</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);font-weight:700;">API 前缀</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">/api/agents</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">/api/plugins/quant-office/agents</td>
+                            </tr>
+                            <tr style="background:var(--pixel-bg);">
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);font-weight:700;">WebSocket</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">/ws</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">/api/plugins/quant-office/ws</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);font-weight:700;">前端路由</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">/ (自有域名)</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">/plugins/quant-office</td>
+                            </tr>
+                            <tr style="background:var(--pixel-bg);">
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);font-weight:700;">认证</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">需自行实现</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">继承 QuantCell JWT</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);font-weight:700;">部署方式</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">Docker / 直接运行</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">ZIP 上传 / Git 克隆</td>
+                            </tr>
+                            <tr style="background:var(--pixel-bg);">
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);font-weight:700;">事件通信</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">内部 WebSocket</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">EventBus + WebSocket</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>📦 QuantCell 插件安装方式</h3>
+                        <ul>
+                            <li><strong>ZIP 上传</strong>：前端插件管理页拖拽上传，后端自动校验 manifest.json、移动目录、写入数据库、热加载</li>
+                            <li><strong>Git 克隆</strong>：提供 Git URL，后端执行 <code>git clone --depth 1</code>，超时 120 秒</li>
+                            <li><strong>手动放置</strong>：直接将插件目录放入 <code>backend/plugins/</code>，系统启动时自动扫描</li>
+                        </ul>
+                        <div class="highlight-box">
+                            <strong>打包命令：</strong><br>
+                            python plugin_packer.py quant_office/ → quant-office-1.0.0.zip
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>🎮 Godot 场景的双模式适配</h3>
+                        <p>Godot 导出的 WebAssembly 通过 <code>JavaScriptBridge</code> 动态检测运行模式，自动适配 API 前缀：</p>
+                        <pre style="background:var(--pixel-dark);color:#a29bfe;padding:12px;font-size:11px;line-height:1.5;overflow-x:auto;margin-top:10px;">
+# GDScript — react_bridge.gd
+var mode = JavaScriptBridge.eval("window.QUANT_OFFICE_MODE || 'standalone'")
+if mode == "quantcell":
+    api_prefix = "/api/plugins/quant-office"
+    ws_url = "ws://host/api/plugins/quant-office/ws"
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- 页面9: axon_quant 引擎集成 -->
+                <div class="page-section" id="page-axon-engines">
+                    <h2 style="margin-bottom:20px;">⚡ axon_quant 引擎深度集成</h2>
+
+                    <div class="info-card">
+                        <h3>🧬 项目简介</h3>
+                        <p><a href="https://github.com/pengwow/axon_quant" target="_blank" style="color:var(--pixel-blue);">axon_quant</a> 是 pengwow 开发的 <strong>AI-Native 量化交易框架</strong>，采用 Rust 核心（21 个 crate，9 层架构）+ Python 前端设计。安装方式：</p>
+                        <pre style="background:var(--pixel-dark);color:#74b9ff;padding:12px;font-size:12px;line-height:1.5;margin-top:10px;border-radius:0;">pip install axon_quant==0.3.0
+# 可选依赖：ONNX 推理 + RL 训练
+pip install axon_quant[onnx,rl]</pre>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>🏗️ 九层架构（21 个 Crate）</h3>
+                        <pre style="background:var(--pixel-dark);color:#dfe6e9;padding:16px;font-size:11px;line-height:1.7;overflow-x:auto;">
+Layer 9: 应用入口
+├─ axon-cli       CLI 工具
+└─ axon-python    PyO3 统一入口 (axon_quant 包)
+
+Layer 8: AI 智能体
+├─ axon-llm       ReAct Agent + Tool Calling + Agent Swarm
+└─ axon-explain   SHAP / 反事实 / 决策报告
+
+Layer 7: 模型服务
+├─ axon-inference ONNX / Candle / tch 推理引擎
+└─ axon-ensemble  模型集成（投票 / Stacking / 动态加权）
+
+Layer 6: 训练管线
+├─ axon-rl        Gymnasium 环境 + VecEnv + 奖励函数
+├─ axon-hpo       Optuna 超参优化（NSGA-II 多目标）
+├─ axon-distributed Ray Actor 分布式训练
+└─ axon-walk-forward 滚动前向验证
+
+Layer 5: 实验治理
+├─ axon-tracker   MLflow / WandB / Local / Memory 追踪
+└─ axon-registry  模型注册表（SemVer + 生命周期 + 回滚）
+
+Layer 4: 生产执行
+├─ axon-exchange  Binance / OKX 适配器（REST + WebSocket）
+├─ axon-risk      风控引擎（仓位 / 回撤 / VaR / 熔断）
+├─ axon-oms       订单管理系统
+└─ axon-monitor   监控告警 + 健康检查
+
+Layer 3: 回测引擎
+├─ axon-backtest  L1/L2/L3 撮合 + Almgren-Chriss 冲击模型
+└─ axon-compliance 合规审计 + 日报/月报/年报
+
+Layer 2: 数据服务
+└─ axon-data      Arrow 列式存储 + CSV/Parquet + 特征管道
+
+Layer 1: 核心类型
+└─ axon-core      时间戳/价格/数量/订单/事件/队列/组合/SIMD
+                        </pre>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>🎯 QuantOffice Agent ↔ axon_quant 映射</h3>
+                        <p>axon_quant 内置 <strong>Agent Swarm</strong>（MarketAgent / RiskAgent / ExecutionAgent / AuditAgent + SwarmOrchestrator），与 QuantOffice 的 1+5 Agent 设计天然对齐：</p>
+                        <table style="width:100%;font-size:12px;border-collapse:collapse;margin-top:12px;">
+                            <tr style="background:var(--pixel-dark);color:white;">
+                                <th style="padding:8px;border:2px solid var(--pixel-dark);text-align:left;">QuantOffice Agent</th>
+                                <th style="padding:8px;border:2px solid var(--pixel-dark);text-align:left;">axon_quant 模块</th>
+                                <th style="padding:8px;border:2px solid var(--pixel-dark);text-align:left;">核心 API</th>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);font-weight:700;">ChiefTrader</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">axon-llm SwarmOrchestrator + ReActAgent</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);"><code>LLMBackend</code>, <code>ReActAgent</code>, <code>SwarmOrchestrator</code></td>
+                            </tr>
+                            <tr style="background:var(--pixel-bg);">
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);font-weight:700;">DataAgent</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">axon-data + axon-core</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);"><code>DataLoader</code>, <code>FeaturePipeline</code>, <code>RecordBatch</code></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);font-weight:700;">StrategyAgent</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">axon-rl + axon-backtest</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);"><code>TradingEnv</code>, <code>BacktestEngine</code>, <code>VecEnv</code></td>
+                            </tr>
+                            <tr style="background:var(--pixel-bg);">
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);font-weight:700;">RiskAgent</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">axon-risk</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);"><code>RiskEngine</code>, <code>CircuitBreaker</code>, <code>VaRLimit</code></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);font-weight:700;">ExecutionAgent</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">axon-oms + axon-exchange</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);"><code>OrderManagementSystem</code>, <code>BinanceAdapter</code></td>
+                            </tr>
+                            <tr style="background:var(--pixel-bg);">
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);font-weight:700;">ReportAgent</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);">axon-compliance + axon-explain</td>
+                                <td style="padding:8px;border:2px solid var(--pixel-light-gray);"><code>ComplianceEngine</code>, <code>KernelSHAP</code></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>🚀 核心性能指标</h3>
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px;">
+                            <div style="background:var(--pixel-dark);color:#00b894;padding:16px;text-align:center;border:3px solid var(--pixel-dark);">
+                                <div style="font-size:28px;font-weight:700;">&gt;1M</div>
+                                <div style="font-size:11px;margin-top:4px;">events/sec<br>回测吞吐</div>
+                            </div>
+                            <div style="background:var(--pixel-dark);color:#74b9ff;padding:16px;text-align:center;border:3px solid var(--pixel-dark);">
+                                <div style="font-size:28px;font-weight:700;">&lt;1μs</div>
+                                <div style="font-size:11px;margin-top:4px;">P99 撮合延迟</div>
+                            </div>
+                            <div style="background:var(--pixel-dark);color:#fdcb6e;padding:16px;text-align:center;border:3px solid var(--pixel-dark);">
+                                <div style="font-size:28px;font-weight:700;">12ns</div>
+                                <div style="font-size:11px;margin-top:4px;">风控预检查</div>
+                            </div>
+                            <div style="background:var(--pixel-dark);color:#a29bfe;padding:16px;text-align:center;border:3px solid var(--pixel-dark);">
+                                <div style="font-size:28px;font-weight:700;">1.2μs</div>
+                                <div style="font-size:11px;margin-top:4px;">订单提交</div>
+                            </div>
+                            <div style="background:var(--pixel-dark);color:#e17055;padding:16px;text-align:center;border:3px solid var(--pixel-dark);">
+                                <div style="font-size:28px;font-weight:700;">&gt;10K</div>
+                                <div style="font-size:11px;margin-top:4px;">steps/sec<br>RL 训练</div>
+                            </div>
+                            <div style="background:var(--pixel-dark);color:#fab1a0;padding:16px;text-align:center;border:3px solid var(--pixel-dark);">
+                                <div style="font-size:28px;font-weight:700;">1200+</div>
+                                <div style="font-size:11px;margin-top:4px;">Rust 测试用例</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>🐍 Python API 模块速查</h3>
+                        <table style="width:100%;font-size:12px;border-collapse:collapse;margin-top:12px;">
+                            <tr style="background:var(--pixel-dark);color:white;">
+                                <th style="padding:8px;border:2px solid var(--pixel-dark);text-align:left;">Python 模块</th>
+                                <th style="padding:8px;border:2px solid var(--pixel-dark);text-align:left;">Crate</th>
+                                <th style="padding:8px;border:2px solid var(--pixel-dark);text-align:left;">核心类型</th>
+                            </tr>
+                            <tr><td style="padding:8px;border:2px solid var(--pixel-light-gray);"><code>axon_quant.rl</code></td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">axon-rl</td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">TradingEnv, VecEnv, RewardFn</td></tr>
+                            <tr style="background:var(--pixel-bg);"><td style="padding:8px;border:2px solid var(--pixel-light-gray);"><code>axon_quant.llm</code></td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">axon-llm</td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">LLMBackend, ReActAgent, ToolDefinition</td></tr>
+                            <tr><td style="padding:8px;border:2px solid var(--pixel-light-gray);"><code>axon_quant.backtest</code></td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">axon-backtest</td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">BacktestEngine, MatchingEngine</td></tr>
+                            <tr style="background:var(--pixel-bg);"><td style="padding:8px;border:2px solid var(--pixel-light-gray);"><code>axon_quant.exchange</code></td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">axon-exchange</td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">BinanceAdapter, OkxAdapter</td></tr>
+                            <tr><td style="padding:8px;border:2px solid var(--pixel-light-gray);"><code>axon_quant.risk</code></td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">axon-risk</td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">RiskEngine, CircuitBreaker</td></tr>
+                            <tr style="background:var(--pixel-bg);"><td style="padding:8px;border:2px solid var(--pixel-light-gray);"><code>axon_quant.oms</code></td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">axon-oms</td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">OrderManagementSystem, Portfolio</td></tr>
+                            <tr><td style="padding:8px;border:2px solid var(--pixel-light-gray);"><code>axon_quant.inference</code></td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">axon-inference</td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">InferenceEngine, OnnxBackend</td></tr>
+                            <tr style="background:var(--pixel-bg);"><td style="padding:8px;border:2px solid var(--pixel-light-gray);"><code>axon_quant.hpo</code></td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">axon-hpo</td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">HPOConfig, StudyConfig</td></tr>
+                            <tr><td style="padding:8px;border:2px solid var(--pixel-light-gray);"><code>axon_quant.explain</code></td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">axon-explain</td><td style="padding:8px;border:2px solid var(--pixel-light-gray);">KernelSHAP, CounterfactualGenerator</td></tr>
+                        </table>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>📡 事件驱动桥接</h3>
+                        <p>axon_quant 使用 <code>crossbeam-channel</code> bounded 100K 事件队列（零锁设计），QuantOffice WebSocket Manager 直接订阅：</p>
+                        <pre style="background:var(--pixel-dark);color:#a29bfe;padding:12px;font-size:11px;line-height:1.5;overflow-x:auto;margin-top:10px;">from axon_quant.core import EventBus
+
+class QuantOfficeEventBridge:
+    def __init__(self, ws_manager):
+        self.ws_manager = ws_manager
+        self.event_bus = EventBus.new()
+    
+    async def subscribe(self):
+        self.event_bus.subscribe("order_filled", self._on_order_filled)
+        self.event_bus.subscribe("risk_alert", self._on_risk_alert)
+        self.event_bus.subscribe("backtest_complete", self._on_backtest_complete)
+    
+    async def _on_risk_alert(self, event):
+        # RiskAgent 红灯警报 → 前端像素办公室闪烁
+        await self.ws_manager.broadcast({
+            "type": "risk_alert",
+            "agent": "RiskAgent",
+            "severity": event.severity,
+        })</pre>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 右侧统计面板 -->
+        <aside class="right-panel">
+            <div class="panel-section">
+                <div class="panel-title">
+                    <span>📊 今日核心指标</span>
+                    <span style="font-size:11px;color:var(--pixel-gray);">实时</span>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">策略信号消耗 / 限额</div>
+                    <div class="stat-value" style="color:var(--pixel-blue);">42 / 1000</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">今日交易量</div>
+                    <div class="stat-value" style="color:var(--pixel-purple);">¥128.5万</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">今日盈亏</div>
+                    <div class="stat-value up" id="panelPnl">+2.34%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">最大回撤</div>
+                    <div class="stat-value" style="color:var(--pixel-orange);">-0.82%</div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">
+                    <span>📋 Agent 任务明细</span>
+                    <span style="font-size:11px;cursor:pointer;">全部 ▾</span>
+                </div>
+                <div style="font-size:12px;line-height:2;">
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--pixel-light-gray);">
+                        <span>📊 DataAgent</span>
+                        <span style="color:var(--pixel-green);">已完成</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--pixel-light-gray);">
+                        <span>📈 StrategyAgent</span>
+                        <span style="color:var(--pixel-yellow);">回测中</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--pixel-light-gray);">
+                        <span>🛡️ RiskAgent</span>
+                        <span style="color:var(--pixel-green);">监控中</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--pixel-light-gray);">
+                        <span>⚡ ExecutionAgent</span>
+                        <span style="color:var(--pixel-green);">就绪</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;">
+                        <span>📑 ReportAgent</span>
+                        <span style="color:var(--pixel-gray);">待机</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">
+                    <span>🔔 系统日志</span>
+                </div>
+                <div style="font-size:11px;line-height:1.8;color:#666;font-family:monospace;" id="logPanel">
+                    <div>[09:30] 开盘信号生成完成</div>
+                    <div>[09:31] Strategy_01 买入信号触发</div>
+                    <div>[09:32] RiskAgent 风控检查通过</div>
+                    <div>[09:33] ExecutionAgent 订单已提交</div>
+                    <div>[09:35] 成交确认: 1000股 @ ¥12.58</div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Agent 悬浮提示 -->
+    <div class="agent-tooltip" id="agentTooltip">
+        <h4 id="tooltipTitle"></h4>
+        <p id="tooltipContent"></p>
+    </div>
+
+    <script>
+        // 页面导航
+        const navItems = document.querySelectorAll('.nav-item');
+        const pageSections = document.querySelectorAll('.page-section');
+        const pageTitle = document.getElementById('pageTitle');
+
+        const pageTitles = {
+            'office': '🏢 像素风格量化交易办公室',
+            'agents': '🤖 Agent 协作团队',
+            'architecture': '⚙️ 技术架构',
+            'plugin-arch': '🔌 QuantCell 插件架构',
+            'axon-engines': '⚡ axon_quant 引擎集成',
+            'value': '💡 价值与意义',
+            'intro': '📋 创意介绍',
+            'users': '👥 目标用户',
+            'roadmap': '🗓️ 开发路线'
+        };
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const page = item.dataset.page;
+                if (!page) return;
+
+                navItems.forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+
+                pageSections.forEach(s => s.classList.remove('active'));
+                const target = document.getElementById('page-' + page);
+                if (target) target.classList.add('active');
+
+                pageTitle.textContent = pageTitles[page] || page;
+            });
+        });
+
+        // Agent 提示框
+        const tooltip = document.getElementById('agentTooltip');
+        const tooltipTitle = document.getElementById('tooltipTitle');
+        const tooltipContent = document.getElementById('tooltipContent');
+
+        const agentInfo = {
+            'chief': {
+                title: 'ChiefTrader (首席交易员)',
+                content: '统筹全局的主 Agent。当前状态: 正常运行。今日已处理指令 12 条，分配任务 28 个。'
+            },
+            'data': {
+                title: 'DataAgent (数据分析师)',
+                content: '负责行情数据获取与清洗。当前状态: 数据流正常。今日已处理 tick 数据 150万条。'
+            },
+            'strategy': {
+                title: 'StrategyAgent (策略研究员)',
+                content: '负责策略开发与回测。当前状态: 正在执行回测任务 #2026。预计完成时间: 14:30。'
+            },
+            'risk': {
+                title: 'RiskAgent (风控官)',
+                content: '负责风险监控与预警。当前状态: 安全。今日最大回撤 -0.82%，未触及止损线。'
+            },
+            'execution': {
+                title: 'ExecutionAgent (执行交易员)',
+                content: '负责订单执行与对账。当前状态: 就绪。今日已成交 6 笔，滑点平均 0.03%。'
+            },
+            'report': {
+                title: 'ReportAgent (报告专员)',
+                content: '负责报告生成与推送。当前状态: 待机。将在收盘后自动生成日报。'
+            }
+        };
+
+        document.querySelectorAll('.agent-character').forEach(char => {
+            char.addEventListener('mouseenter', (e) => {
+                const agent = char.dataset.agent;
+                const info = agentInfo[agent];
+                if (info) {
+                    tooltipTitle.textContent = info.title;
+                    tooltipContent.textContent = info.content;
+                    tooltip.style.display = 'block';
+                }
+            });
+
+            char.addEventListener('mousemove', (e) => {
+                tooltip.style.left = (e.clientX + 15) + 'px';
+                tooltip.style.top = (e.clientY + 15) + 'px';
+            });
+
+            char.addEventListener('mouseleave', () => {
+                tooltip.style.display = 'none';
+            });
+
+            char.addEventListener('click', () => {
+                const agent = char.dataset.agent;
+                alert(`您点击了 ${agentInfo[agent].title}\n\n功能开发中：此处将打开该 Agent 的详细控制面板`);
+            });
+        });
+
+        // 风控警报模拟
+        let alertMode = false;
+        function toggleAlert() {
+            alertMode = !alertMode;
+            const riskLight = document.getElementById('riskLight');
+            const pnlValue = document.getElementById('pnlValue');
+            const panelPnl = document.getElementById('panelPnl');
+            const logPanel = document.getElementById('logPanel');
+
+            if (alertMode) {
+                riskLight.className = 'status-light red';
+                pnlValue.textContent = '-1.87%';
+                pnlValue.className = 'stat-value down';
+                panelPnl.textContent = '-1.87%';
+                panelPnl.className = 'stat-value down';
+                logPanel.innerHTML = '<div style="color:var(--pixel-red);font-weight:700;">[ALERT] RiskAgent 触发止损警报!</div>' + logPanel.innerHTML;
+            } else {
+                riskLight.className = 'status-light green';
+                pnlValue.textContent = '+2.34%';
+                pnlValue.className = 'stat-value up';
+                panelPnl.textContent = '+2.34%';
+                panelPnl.className = 'stat-value up';
+                logPanel.innerHTML = '<div style="color:var(--pixel-green);">[INFO] 警报已解除，恢复正常监控</div>' + logPanel.innerHTML;
+            }
+        }
+
+        // 刷新数据模拟
+        function refreshData() {
+            const logPanel = document.getElementById('logPanel');
+            const now = new Date();
+            const time = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            logPanel.innerHTML = `<div>[${time}] 数据刷新完成，所有 Agent 状态同步</div>` + logPanel.innerHTML;
+        }
+
+        // 数据流动画
+        function spawnDataStream() {
+            const office = document.getElementById('isoOffice');
+            if (!office) return;
+            const stream = document.createElement('div');
+            stream.className = 'data-stream';
+            stream.textContent = Math.random() > 0.5 ? '10101' : 'BUY';
+            stream.style.left = Math.random() * 80 + 10 + '%';
+            stream.style.top = '80%';
+            stream.style.color = Math.random() > 0.5 ? 'var(--pixel-green)' : 'var(--pixel-blue)';
+            office.appendChild(stream);
+            setTimeout(() => stream.remove(), 3000);
+        }
+
+        setInterval(spawnDataStream, 2000);
+
+        // 动态日志追加
+        const logMessages = [
+            'Strategy_02 卖出信号触发',
+            'DataAgent 接收到新 tick 数据',
+            'RiskAgent 更新 VaR 计算',
+            'ExecutionAgent 订单部分成交',
+            'ReportAgent 生成实时快照',
+            'ChiefTrader 调度新任务'
+        ];
+
+        setInterval(() => {
+            const logPanel = document.getElementById('logPanel');
+            if (!logPanel || alertMode) return;
+            const now = new Date();
+            const time = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            const msg = logMessages[Math.floor(Math.random() * logMessages.length)];
+            logPanel.innerHTML = `<div>[${time}] ${msg}</div>` + logPanel.innerHTML;
+            if (logPanel.children.length > 10) {
+                logPanel.removeChild(logPanel.lastChild);
+            }
+        }, 8000);
+    </script>
+</body>
+</html>
