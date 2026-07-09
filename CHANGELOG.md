@@ -1,5 +1,51 @@
 # 变更日志
 
+## [0.2.0] - 2026-07-09
+
+### ⚠️ 重大变更
+- **前端完全重写：移除 Godot，切换为纯前端技术栈**
+  - 删除 `godot_project/` 整个目录（`.gd` / `.tscn` / `project.godot` 全部废弃）
+  - 废弃 Godot WASM 像素场景 + `react-godot-bridge` 双向通信
+  - 改为 **React 18 + TypeScript + Vite + bun + 纯 CSS 像素风**
+  - 角色由 CSS 伪元素 + 调色板变量动态生成（无外部素材）
+  - 场景由 CSS 棋盘格地板 + 静态装饰（盆栽/机柜/大屏）拼出
+
+### 新增（前端）
+- `frontend/package.json` — 声明 bun 包管理（`packageManager: bun@1.1.34`）
+- `frontend/bunfig.toml` — npmmirror 国内镜像
+- `frontend/tsconfig.json` — 严格 TS 配置 + `@/*` 路径别名
+- `frontend/vite.config.ts` — Vite + React + FastAPI 代理
+- `frontend/index.html` — 入口 HTML（含 Press Start 2P 字体）
+- `frontend/src/styles/` — 像素风设计令牌（pixel.css / global.css / reset.css）
+- `frontend/src/components/PixelOffice/` — OfficeScene / Workstation / AgentCharacter
+- `frontend/src/components/Layout/` — Sidebar / TopBar / RightPanel
+- `frontend/src/pages/` — 8 个页面（PixelOffice / Dashboard / Agents / Strategies / Backtests / Trades / Risk / Reports）
+- `frontend/src/api/` — REST 客户端 + WebSocket Bus（含自动重连）
+- `frontend/src/stores/` — Zustand (agentStore / uiStore)
+- `frontend/src/types/index.ts` — 与后端 FastAPI 响应字段对齐的 TS 类型
+- `frontend/src/plugins/quant-office/` — QuantCell 插件入口（动态 import）
+
+### 新增（项目根）
+- `Makefile` — 新增 `fe-install / fe-dev / fe-build / fe-typecheck / fe-preview / dev-all` 命令
+- `.gitignore` — 新增 `frontend/.vite / bun.lockb / node_modules` 排除
+
+### 依赖（前端）
+- runtime: `react / react-dom / react-router-dom / @tanstack/react-query / zustand / echarts / echarts-for-react / clsx`
+- dev: `@types/node / @types/react / @vitejs/plugin-react / typescript / vite`
+- bun install: 82 packages, 4.14s（npmmirror）
+- bun build: 706 modules → 22.86 kB CSS + 1.29 MB JS（gzip ≈ 421 KB），4.5s
+
+### 文档
+- `README.md` — 核心特性 / 架构图 / 工具链表 / 全栈快速开始 / 项目结构 全面更新
+- `docs/QuantOffice_Project_Plan.md` — 移除 Godot 描述，改为纯前端像素风
+- `docs/QuantOffice_Plugin_Architecture.md` — 顶部加 v0.1.0 架构变更说明
+- `docs/QuantOffice_Axon_Integration.md` — 架构图改为 Pure-CSS Pixel Office
+
+### 兼容性
+- 前端构建产物可作为 QuantCell 插件集成（路由前缀 `/api/plugins/quant-office`）
+- 浏览器侧最低要求：Chrome 90+ / Edge 90+ / Safari 14+（无 WASM 依赖）
+- 不再需要 Godot 编辑器 / WebGL 2.0 / JavaScriptBridge
+
 ## [0.1.0] - 2026-07-09
 
 ### 新增
@@ -13,7 +59,7 @@
 - `plugin.py` — QuantCell 插件外壳（路由前缀 `/api/plugins/quant-office`）
 - `manifest.json` — 插件清单（permissions + config_schema）
 - 数据层：SQLAlchemy 异步 ORM + Redis 缓存 + Arrow/Parquet 时序存储
-- Godot 像素办公室场景源工程（`godot_project/`）
+- ~~Godot 像素办公室场景源工程（`godot_project/`）~~ → 0.2.0 移除
 - 前端插件入口（`frontend/src/plugins/quant-office/`）
 - Docker 镜像（`docker/Dockerfile` + `docker-compose.yml`）
 - 单元测试 + 集成测试（17 个用例全部通过）

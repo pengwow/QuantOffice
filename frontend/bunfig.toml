@@ -1,0 +1,19 @@
+# Bun 配置 — 配合国内 npm 镜像加速安装
+# 优先级：环境变量 BUN_CONFIG_REGISTRY > 本文件 > 官方 registry
+
+# npmmirror 镜像（推荐国内使用，比淘宝源更稳定）
+registry = "https://registry.npmmirror.com/"
+
+# 备用 npm 镜像
+[install.scopes]
+"@types" = "https://registry.npmmirror.com/"
+
+# 安装行为
+[install]
+exact = false
+frozenLockfile = false
+
+# 网络：放宽超时
+[install.cache]
+disable = false
+dir = "~/.bun/install/cache"

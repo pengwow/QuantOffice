@@ -1,0 +1,133 @@
+/* ============================================================
+ * QuantOffice — 全局样式入口
+ * 像素风设计令牌 + 重置 + 字体 + 动画工具类
+ * ============================================================ */
+
+@import './pixel.css';
+@import './reset.css';
+
+:root {
+  /* 排版 */
+  --font-pixel: 'Press Start 2P', 'VT323', monospace;
+  --font-sans: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* 间距（基于 4px 像素栅格） */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* 圆角（像素风永不用圆角） */
+  --radius-none: 0;
+
+  /* 阴影（像素风：硬阴影，无模糊） */
+  --shadow-pixel-sm: 2px 2px 0 var(--pixel-dark);
+  --shadow-pixel: 4px 4px 0 var(--pixel-dark);
+  --shadow-pixel-lg: 6px 6px 0 var(--pixel-dark);
+
+  /* 边框 */
+  --border-thin: 2px solid var(--pixel-dark);
+  --border-thick: 3px solid var(--pixel-dark);
+  --border-thicker: 4px solid var(--pixel-dark);
+
+  /* 布局尺寸 */
+  --sidebar-width: 240px;
+  --right-panel-width: 320px;
+  --topbar-height: 56px;
+
+  /* 字体大小（像素风偏小） */
+  --text-xs: 10px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-md: 16px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  background: var(--pixel-bg);
+  color: var(--pixel-dark);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 像素字体类 */
+.font-pixel {
+  font-family: var(--font-pixel);
+  letter-spacing: 0.5px;
+  line-height: 1.4;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* 通用工具 */
+.flex {
+  display: flex;
+}
+.flex-col {
+  flex-direction: column;
+}
+.flex-1 {
+  flex: 1;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.gap-1 { gap: var(--space-1); }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.gap-4 { gap: var(--space-4); }
+.gap-6 { gap: var(--space-6); }
+
+.text-center { text-align: center; }
+.uppercase { text-transform: uppercase; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 滚动条（像素风） */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track {
+  background: var(--pixel-light-gray);
+  border: 2px solid var(--pixel-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--pixel-dark);
+  border: 2px solid var(--pixel-light-gray);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pixel-blue);
+}

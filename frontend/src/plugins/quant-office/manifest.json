@@ -3,5 +3,12 @@
   "version": "0.1.0",
   "entry": "index.tsx",
   "pluginName": "quant-office",
-  "permissions": ["websocket.subscribe", "menu.register", "route.register"]
+  "displayName": "QuantOffice 像素交易指挥中枢",
+  "description": "纯前端像素风 SPA，提供 1+5 Agent 可视化协作场景",
+  "permissions": [
+    "websocket.subscribe",
+    "menu.register",
+    "route.register",
+    "asset.register"
+  ]
 }

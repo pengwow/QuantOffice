@@ -1,5 +1,10 @@
 # QuantOffice 插件化改造方案 — 兼容 QuantCell 双模式运行
 
+> **v0.1.0 架构更新**：原方案采用 Godot 4.3+ 导出的 WebAssembly 像素场景 + `react-godot-bridge` 双向通信。
+> 现已**完全切换为纯前端技术栈**（React 18 + TypeScript + Vite + bun + 纯 CSS 像素风），
+> 不再依赖 Godot / WASM / WebGL / JavaScriptBridge 等运行时，构建/部署/分发大幅简化。
+> 本文档中如仍出现 Godot / WASM 描述，仅作历史参考；实际项目结构请见 README 与 [QuantOffice_Project_Plan.md](./QuantOffice_Project_Plan.md)。
+
 ## 一、参考项目架构分析
 
 ### 1.1 QuantCell 插件系统核心架构

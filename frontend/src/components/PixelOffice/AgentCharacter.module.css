@@ -1,0 +1,125 @@
+.character {
+  position: relative;
+  width: 32px;
+  height: 48px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: bottom center;
+  transition: transform 200ms ease;
+}
+
+.character.busy {
+  animation: walk 0.6s ease-in-out infinite;
+}
+.character.warning {
+  animation: float 0.8s ease-in-out infinite;
+}
+.character.error {
+  animation: blink 0.4s steps(2) infinite;
+}
+
+/* 头（4×4 像素） */
+.head {
+  width: 16px;
+  height: 16px;
+  background: var(--skin);
+  border: 2px solid var(--pixel-dark);
+  position: relative;
+  z-index: 3;
+}
+/* 眼睛 */
+.head::before,
+.head::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  width: 2px;
+  height: 2px;
+  background: var(--pixel-dark);
+}
+.head::before { left: 4px; }
+.head::after  { right: 4px; }
+
+/* 头发 / 帽子（顶部 2px 像素） */
+.hat {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 20px;
+  height: 6px;
+  background: var(--hat);
+  border: 2px solid var(--pixel-dark);
+  z-index: 4;
+}
+
+/* 身体（躯干） */
+.body {
+  width: 20px;
+  height: 20px;
+  background: var(--uniform);
+  border: 2px solid var(--pixel-dark);
+  margin-top: 2px;
+  position: relative;
+  z-index: 2;
+}
+
+/* 领带 / 徽章 */
+.body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 100%;
+  background: var(--accent);
+}
+
+/* 手臂（左右两个像素块） */
+.arm {
+  position: absolute;
+  top: 6px;
+  width: 4px;
+  height: 12px;
+  background: var(--uniform);
+  border: 2px solid var(--pixel-dark);
+  z-index: 1;
+}
+.arm.left  { left: -6px; }
+.arm.right { right: -6px; }
+
+/* 腿 */
+.legs {
+  display: flex;
+  gap: 2px;
+  margin-top: -2px;
+  z-index: 1;
+}
+.legs::before,
+.legs::after {
+  content: '';
+  width: 8px;
+  height: 10px;
+  background: var(--leg);
+  border: 2px solid var(--pixel-dark);
+}
+
+/* 选中态光环 */
+.character.selected {
+  filter: drop-shadow(0 0 0 var(--pixel-dark));
+}
+.character.selected::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 4px;
+  background: var(--pixel-yellow);
+  border: 2px solid var(--pixel-dark);
+  animation: pulse 1s ease-in-out infinite;
+}

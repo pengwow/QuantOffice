@@ -124,7 +124,7 @@ def create_app() -> FastAPI:
             },
         }
 
-    # ---- 静态资源（Godot WASM + 前端构建产物） ----
+    # ---- 静态资源（前端 Vite 构建产物） ----
     static_dir = settings.resolved_static_dir
     if static_dir.exists():
         app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")

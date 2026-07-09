@@ -20,9 +20,14 @@ env/
 uv.lock.sha256
 .uv-cache/
 
-# Node
+# Node / 前端
 node_modules/
 frontend/dist/
+frontend/.vite/
+frontend/node_modules/
+frontend/bun.lockb
+frontend/.env
+frontend/.env.local
 
 # 数据（运行时数据目录，与源代码 quant_office/data/ 区分）
 /data/

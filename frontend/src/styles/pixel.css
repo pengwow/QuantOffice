@@ -1,0 +1,186 @@
+/* ============================================================
+ * 像素风设计令牌 (Design Tokens)
+ * ============================================================ */
+
+:root {
+  /* ----- 像素调色板 ----- */
+  --pixel-bg: #f0f2f5;          /* 整体背景 */
+  --pixel-dark: #2d3436;        /* 主文字 / 边框 */
+  --pixel-white: #ffffff;       /* 卡片 / 面板 */
+  --pixel-gray: #b2bec3;        /* 次要文字 */
+  --pixel-light-gray: #dfe6e9;  /* 浅背景 / 分割线 */
+
+  /* 角色色（保持语义色：绿=首席、蓝=数据、橙=策略、红=风控、紫=执行、黄=报告） */
+  --pixel-green: #00b894;       /* 首席 */
+  --pixel-blue: #74b9ff;        /* 数据 */
+  --pixel-orange: #e17055;      /* 策略 */
+  --pixel-red: #ff7675;         /* 风控 */
+  --pixel-purple: #a29bfe;      /* 执行 */
+  --pixel-yellow: #fdcb6e;      /* 报告 */
+
+  /* 状态色 */
+  --status-idle: #b2bec3;
+  --status-busy: #74b9ff;
+  --status-success: #00b894;
+  --status-warning: #fdcb6e;
+  --status-error: #ff7675;
+}
+
+/* ============================================================
+ * 像素画通用工具类
+ * ============================================================ */
+
+/* 硬阴影（无模糊） */
+.pixel-shadow-sm {
+  box-shadow: 2px 2px 0 var(--pixel-dark);
+}
+.pixel-shadow {
+  box-shadow: 4px 4px 0 var(--pixel-dark);
+}
+.pixel-shadow-lg {
+  box-shadow: 6px 6px 0 var(--pixel-dark);
+}
+
+/* 像素风按钮基类 */
+.pixel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-pixel);
+  font-size: var(--text-sm);
+  color: var(--pixel-dark);
+  background: var(--pixel-white);
+  border: var(--border-thick);
+  border-radius: 0;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 80ms ease, box-shadow 80ms ease, background 80ms ease;
+  box-shadow: var(--shadow-pixel);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.pixel-btn:hover {
+  background: var(--pixel-yellow);
+}
+.pixel-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--pixel-dark);
+}
+.pixel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.pixel-btn.primary {
+  background: var(--pixel-green);
+  color: var(--pixel-white);
+}
+.pixel-btn.danger {
+  background: var(--pixel-red);
+  color: var(--pixel-white);
+}
+.pixel-btn.warning {
+  background: var(--pixel-yellow);
+}
+
+/* 像素风卡片 */
+.pixel-card {
+  background: var(--pixel-white);
+  border: var(--border-thick);
+  border-radius: 0;
+  box-shadow: var(--shadow-pixel);
+  padding: var(--space-4);
+}
+
+/* 像素风输入框 */
+.pixel-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--pixel-dark);
+  background: var(--pixel-bg);
+  border: var(--border-thick);
+  border-radius: 0;
+  outline: none;
+  transition: border-color 80ms ease, background 80ms ease;
+}
+.pixel-input:focus {
+  border-color: var(--pixel-blue);
+  background: var(--pixel-white);
+}
+
+/* 状态徽章 */
+.pixel-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px 8px;
+  font-family: var(--font-pixel);
+  font-size: var(--text-xs);
+  color: var(--pixel-white);
+  background: var(--pixel-dark);
+  border: 2px solid var(--pixel-dark);
+  text-transform: uppercase;
+}
+.pixel-badge::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+  border: 1px solid var(--pixel-dark);
+  opacity: 0.5;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.pixel-badge.idle    { background: var(--status-idle); }
+.pixel-badge.busy    { background: var(--status-busy); }
+.pixel-badge.success { background: var(--status-success); }
+.pixel-badge.warning { background: var(--status-warning); color: var(--pixel-dark); }
+.pixel-badge.error   { background: var(--status-error); }
+
+/* 状态点 */
+.status-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--pixel-dark);
+}
+.status-dot.idle    { background: var(--status-idle); }
+.status-dot.busy    { background: var(--status-busy); }
+.status-dot.success { background: var(--status-success); }
+.status-dot.warning { background: var(--status-warning); }
+.status-dot.error   {
+  background: var(--status-error);
+  animation: blink 0.8s steps(2) infinite;
+}
+
+/* 关键帧动画 */
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 1; }
+}
+@keyframes blink {
+  0%, 50%  { opacity: 1; }
+  50.01%, 100% { opacity: 0.2; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+@keyframes typing {
+  0%   { width: 0; }
+  100% { width: 100%; }
+}
+@keyframes walk {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  25%      { transform: translateY(-2px) scaleY(0.95); }
+  75%      { transform: translateY(0) scaleY(1.05); }
+}
+
+/* 像素边框按钮（不投影，模拟像素描边） */
+.pixel-border {
+  border-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><rect width='2' height='2' fill='%232d3436'/></svg>") 2 stretch;
+  border: 4px solid transparent;
+}

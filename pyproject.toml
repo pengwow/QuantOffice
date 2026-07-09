@@ -11,7 +11,7 @@ readme = "README.md"
 requires-python = ">=3.14"
 license = { text = "MIT" }
 authors = [{ name = "QuantOffice Team" }]
-keywords = ["quantitative-trading", "multi-agent", "pixel-style", "fastapi", "godot", "axon-quant"]
+keywords = ["quantitative-trading", "multi-agent", "pixel-style", "fastapi", "react", "axon-quant"]
 
 dependencies = [
     "fastapi>=0.110",

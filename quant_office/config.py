@@ -74,8 +74,7 @@ class Settings(BaseSettings):
 
     # ---- 像素办公室 ----
     pixel_fps: int = 30
-    godot_wasm_path: str = "quant_office/godot/quant_office.wasm"
-    godot_pck_path: str = "quant_office/godot/quant_office.pck"
+    frontend_static_dir: str = "./frontend/dist"
 
     # ---- 数据库 ----
     database_url: str = "sqlite+aiosqlite:///./data/quant_office.db"

@@ -1,0 +1,97 @@
+.panel {
+  width: var(--right-panel-width);
+  background: var(--pixel-white);
+  border-left: var(--border-thicker);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  color: var(--pixel-gray);
+  font-size: var(--text-sm);
+  text-align: center;
+  gap: var(--space-3);
+}
+.emptyIcon { font-size: 48px; opacity: 0.4; }
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+.header {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 2px dashed var(--pixel-light-gray);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.headerEmoji { font-size: 28px; }
+.headerName {
+  font-family: var(--font-pixel);
+  font-size: var(--text-md);
+  color: var(--pixel-dark);
+  flex: 1;
+}
+.headerClose {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pixel-light-gray);
+  border: 2px solid var(--pixel-dark);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+.headerClose:hover { background: var(--pixel-red); color: var(--pixel-white); }
+
+.section {
+  margin-bottom: var(--space-4);
+}
+.sectionTitle {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  color: var(--pixel-gray);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: var(--space-2);
+  padding-bottom: 4px;
+  border-bottom: 1px dashed var(--pixel-light-gray);
+}
+
+.metricRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+}
+.metricRow .k { color: var(--pixel-gray); }
+.metricRow .v { color: var(--pixel-dark); font-weight: 700; }
+.metricRow .v.up { color: var(--status-success); }
+.metricRow .v.down { color: var(--status-error); }
+
+.taskBox {
+  padding: var(--space-2) var(--space-3);
+  background: var(--pixel-bg);
+  border: 2px solid var(--pixel-dark);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--pixel-dark);
+}
+
+.actionRow {
+  display: flex;
+  gap: var(--space-2);
+}
