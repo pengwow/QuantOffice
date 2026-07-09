@@ -137,6 +137,16 @@ class QuantOfficePlugin(PluginBase):
                 "websocket": f"{self.PLUGIN_PREFIX}/ws",
             }
 
+        @self.router.post("/demo/reset", status_code=200)
+        async def _demo_reset() -> Dict[str, Any]:
+            from .demo import reset_and_seed
+            return {"ok": True, "seeded": await reset_and_seed()}
+
+        @self.router.post("/demo/seed", status_code=200)
+        async def _demo_seed() -> Dict[str, Any]:
+            from .demo import seed_if_empty
+            return {"ok": True, "seeded": await seed_if_empty()}
+
     def _setup_websocket(self) -> None:
         self.router.add_api_websocket_route("/ws", self.ws_manager.handle_ws)
 
@@ -173,11 +183,22 @@ class QuantOfficePlugin(PluginBase):
                 asyncio.set_event_loop(loop)
             if loop.is_running():
                 loop.create_task(self._scheduler.start_all())
+                loop.create_task(self._seed_demo())
             else:
                 loop.run_until_complete(self._scheduler.start_all())
+                loop.run_until_complete(self._seed_demo())
         except Exception as exc:  # pragma: no cover
             self.logger.exception("AgentScheduler 启动失败: %s", exc)
         self.logger.info("QuantOffice 插件已启动")
+
+    async def _seed_demo(self) -> None:
+        try:
+            from .demo import seed_if_empty
+            counts = await seed_if_empty()
+            if any(counts.values()):
+                self.logger.info("插件演示数据已注入：%s", counts)
+        except Exception as exc:  # pragma: no cover
+            self.logger.exception("插件演示数据播种失败: %s", exc)
 
     def stop(self) -> None:
         super().stop()

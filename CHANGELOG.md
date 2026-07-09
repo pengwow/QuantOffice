@@ -1,5 +1,50 @@
 # 变更日志
 
+## [0.2.2] - 2026-07-09
+
+### 修复
+- **浏览器端 API 全面 404 / 307**
+  - `quant_office/app.py` FastAPI 加 `redirect_slashes=False`，避免前端无斜杠路径 307
+- **后端响应字段与前端 `types/index.ts` 完全对不上**
+  - 新增 [services/api_schemas.py](file:///workspace/quant_office/services/api_schemas.py) 统一转换层
+  - Agent：后端 PascalCase role（`ChiefTrader`）→ 前端 lowercase（`chief`），补 `emoji / color / position / metrics / updated_at`
+  - Strategy / Backtest / Trade / RiskAlert / Report 全部按前端字段名 + 嵌套结构输出
+  - Dashboard：返回 `DashboardSummary` 形状（`agents / recent_alerts / equity_curve / total_pnl / sharpe / drawdown`）
+- **缺失端点补齐**
+  - `POST /api/agents/{role}/start|stop`（前端 start/stop 按钮）
+  - `POST /api/strategies` + `PUT/DELETE /api/strategies/{id}`（策略 CRUD）
+  - `POST /api/risk/alerts/{id}/ack`（告警确认）
+  - `GET /api/risk/metrics`（风控聚合）
+  - `GET /api/reports/{id}`（报告详情）
+
+### 新增（演示模式）
+- [quant_office/demo.py](file:///workspace/quant_office/demo.py) — 启动自动播种：
+  - 5 个策略（3 live / 1 paused / 1 draft）
+  - 4 个回测（含 90 点权益曲线）
+  - 30 笔成交（5 标的，多空混合）
+  - 3 个风控告警（1 critical / 1 warning / 1 info）
+  - 1 个完整报告（含 4 个章节）
+- `POST /api/demo/reset` 端点（清空 + 重新注入）
+- `POST /api/demo/seed` 端点（空库注入）
+- 插件模式（`quant_office/plugin.py`）也接入 `_seed_demo()` hook
+
+### 改进
+- [quant_office/data/database.py](file:///workspace/quant_office/data/database.py)：拆分 `init_database()` 与 `create_all_tables()`，
+  解决 FastAPI lifespan 中 `loop.is_running()` 导致表创建在后台异步执行的竞态
+- [quant_office/data/models.py](file:///workspace/quant_office/data/models.py)：扩展 ORM 字段
+  （Strategy 加 `pnl / sharpe / drawdown / params`；Backtest 加完整指标；Trade 加 `pnl / order_id`；RiskAlert 加 `acknowledged` 等）
+
+### 测试
+- 新增 `test_demo_seed_and_reset`：验证 5 策略 / 4 回测 / 30 成交 / 3 告警 / 1 报告 / reset 端点
+- 更新 `test_agents_list`：校验前端 Agent 形状（id/role/name/emoji/color/position/status 字段齐全）
+- 更新 `test_full_workflow`：用新的 backtest / trade API 形状
+- **结果：18/18 全部通过（1.13s）**
+
+### 端到端验证
+- 后端启动后自动播种：策略=5 回测=4 成交=30 告警=3 报告=1
+- 11 个端点全部返回 200/201（含 5 个写入端点：start/trade/strategy/ack/reset）
+- 前端 `bun run typecheck` 通过；`bun run build` 706 modules 5.06s
+
 ## [0.2.1] - 2026-07-09
 
 ### 修复

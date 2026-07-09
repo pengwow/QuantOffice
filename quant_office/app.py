@@ -38,8 +38,19 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """启动 / 关闭钩子。"""
     settings.resolved_data_dir.mkdir(parents=True, exist_ok=True)
     init_database()
+    # 显式建表（确保在有 running loop 的 lifespan 场景下也完成）
+    from .data.database import create_all_tables
+    await create_all_tables()
     scheduler = get_agent_scheduler()
     await scheduler.start_all()
+    # 首次启动自动播种演示数据（数据库为空时）
+    try:
+        from .demo import seed_if_empty
+        counts = await seed_if_empty()
+        if any(counts.values()):
+            logger.info("演示数据已注入：%s", counts)
+    except Exception as exc:  # pragma: no cover
+        logger.exception("演示数据播种失败: %s", exc)
     logger.info("QuantOffice 启动完成，模式=standalone 版本=%s", __version__)
     try:
         yield
@@ -50,11 +61,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 def create_app() -> FastAPI:
     settings.mode = "standalone"
+    # 关闭 trailing-slash 307 重定向（前端不带斜杠，必须直接 200）
     app = FastAPI(
         title="QuantOffice",
         description="像素风格量化交易指挥中枢",
         version=__version__,
         lifespan=lifespan,
+        redirect_slashes=False,
     )
 
     # ---- CORS ----
@@ -123,6 +136,21 @@ def create_app() -> FastAPI:
                 "risk_max_drawdown": settings.risk_max_drawdown,
             },
         }
+
+    # ---- 演示数据管理 ----
+    @app.post("/api/demo/reset", status_code=200)
+    async def demo_reset() -> dict:
+        """清空并重新注入演示数据（用于演示重置）。"""
+        from .demo import reset_and_seed
+        counts = await reset_and_seed()
+        return {"ok": True, "seeded": counts}
+
+    @app.post("/api/demo/seed", status_code=200)
+    async def demo_seed() -> dict:
+        """仅在空库时注入（启动时已自动调用）。"""
+        from .demo import seed_if_empty
+        counts = await seed_if_empty()
+        return {"ok": True, "seeded": counts}
 
     # ---- 静态资源（前端 Vite 构建产物） ----
     static_dir = settings.resolved_static_dir

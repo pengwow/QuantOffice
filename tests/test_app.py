@@ -52,12 +52,17 @@ def test_info(client):
 
 
 def test_agents_list(client):
-    r = client.get("/api/agents/")
+    r = client.get("/api/agents")
     assert r.status_code == 200
     body = r.json()
-    assert len(body["agents"]) == 6
-    names = {a["id"] for a in body["agents"]}
-    assert names == {"chief", "data", "strategy", "risk", "execution", "report"}
+    assert isinstance(body, list)
+    assert len(body) == 6
+    ids = {a["id"] for a in body}
+    assert ids == {"chief", "data", "strategy", "risk", "execution", "report"}
+    # 验证字段完整（与前端 Agent 形状一致）
+    first = body[0]
+    for k in ("id", "role", "name", "emoji", "color", "position", "status"):
+        assert k in first, f"missing field: {k}"
 
 
 def test_full_workflow(client):
@@ -69,34 +74,84 @@ def test_full_workflow(client):
     assert r.status_code == 200
     assert r.json()["ok"] is True
 
-    # 2. 跑回测
+    # 2. 跑回测（新 API：需 strategy_id，演示数据中已有 strat-momentum-btc）
     r = client.post(
-        "/api/backtests/",
-        json={"strategy": "momentum", "symbol": "BTCUSDT", "timeframe": "1h"},
+        "/api/backtests",
+        json={"strategy_id": "strat-momentum-btc", "start": "2025-01-01", "end": "2025-12-31"},
     )
-    assert r.status_code == 200
+    assert r.status_code == 201
     body = r.json()
     assert "total_return" in body
+    assert "equity_curve" in body
+    assert isinstance(body["equity_curve"], list)
 
-    # 3. 下单
+    # 3. 下单（POST 创建资源返回 201）
     r = client.post(
-        "/api/trades/",
-        json={"symbol": "BTCUSDT", "side": "buy", "quantity": 0.01, "order_type": "market"},
+        "/api/trades",
+        json={"strategy_id": "strat-momentum-btc", "symbol": "BTCUSDT", "side": "buy", "qty": 0.01},
     )
-    assert r.status_code == 200
+    assert r.status_code == 201
     assert r.json()["status"] in ("filled", "submitted", "rejected")
 
     # 4. 风控指标
     r = client.get("/api/risk/metrics")
     assert r.status_code == 200
 
-    # 5. Dashboard
-    r = client.get("/api/dashboard/")
+    # 5. 风控告警列表
+    r = client.get("/api/risk/alerts")
+    assert r.status_code == 200
+    assert isinstance(r.json(), list)
+
+    # 6. Dashboard
+    r = client.get("/api/dashboard")
     assert r.status_code == 200
     body = r.json()
     assert "agents" in body
-    assert "risk" in body
-    assert "trades" in body
+    assert "recent_alerts" in body
+    assert "equity_curve" in body
+    assert "total_pnl" in body
+
+    # 7. 策略列表（含 demo 数据）
+    r = client.get("/api/strategies")
+    assert r.status_code == 200
+    assert isinstance(r.json(), list)
+    assert len(r.json()) >= 1
+
+    # 8. 回测列表
+    r = client.get("/api/backtests")
+    assert r.status_code == 200
+    assert isinstance(r.json(), list)
+
+
+def test_demo_seed_and_reset(client):
+    """启动时自动播种演示数据，且 /api/demo/reset 可重新注入。"""
+    r = client.get("/api/strategies")
+    assert r.status_code == 200
+    assert len(r.json()) >= 5  # 5 个 demo 策略
+
+    r = client.get("/api/backtests")
+    assert r.status_code == 200
+    assert len(r.json()) >= 4  # 4 个 demo 回测
+
+    r = client.get("/api/trades")
+    assert r.status_code == 200
+    assert len(r.json()) >= 30  # 30 笔 demo 成交
+
+    r = client.get("/api/risk/alerts")
+    assert r.status_code == 200
+    assert len(r.json()) >= 3  # 3 个 demo 告警
+
+    r = client.get("/api/reports")
+    assert r.status_code == 200
+    assert len(r.json()) >= 1  # 1 个 demo 报告
+
+    # 测试 reset 端点
+    r = client.post("/api/demo/reset")
+    assert r.status_code == 200
+    seeded = r.json()["seeded"]
+    assert seeded["strategy"] == 5
+    assert seeded["backtest"] == 4
+    assert seeded["trade"] == 30
 
 
 def test_plugin_mode_registers():
