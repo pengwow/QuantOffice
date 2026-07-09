@@ -65,7 +65,7 @@ def create_app() -> FastAPI:
     # 关闭 trailing-slash 307 重定向（前端不带斜杠，必须直接 200）
     app = FastAPI(
         title="QuantOffice",
-        description="像素风格量化交易指挥中枢",
+        description="QuantOffice — 量化交易指挥中枢：1+5 Agent 协作、策略回测、风控监控与可视化交易执行",
         version=__version__,
         lifespan=lifespan,
         redirect_slashes=False,
@@ -134,7 +134,7 @@ def create_app() -> FastAPI:
             "axon_quant_enabled": engine.using_axon,
             "agents": ["chief", "data", "strategy", "risk", "execution", "report"],
             "config": {
-                "pixel_fps": settings.pixel_fps,
+                "render_fps": settings.render_fps,
                 "default_exchange": settings.default_exchange,
                 "risk_max_drawdown": settings.risk_max_drawdown,
             },

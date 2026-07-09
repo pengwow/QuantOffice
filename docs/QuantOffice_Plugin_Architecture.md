@@ -1,7 +1,7 @@
 # QuantOffice 插件化改造方案 — 兼容 QuantCell 双模式运行
 
-> **v0.1.0 架构更新**：原方案采用 Godot 4.3+ 导出的 WebAssembly 像素场景 + `react-godot-bridge` 双向通信。
-> 现已**完全切换为纯前端技术栈**（React 18 + TypeScript + Vite + bun + 纯 CSS 像素风），
+> **v0.1.0 架构更新**：原方案采用 Godot 4.3+ 导出的 WebAssembly 场景 + `react-godot-bridge` 双向通信。
+> 现已**完全切换为纯前端技术栈**（React 18 + TypeScript + Vite + bun + 纯 CSS 硬阴影风格），
 > 不再依赖 Godot / WASM / WebGL / JavaScriptBridge 等运行时，构建/部署/分发大幅简化。
 > 本文档中如仍出现 Godot / WASM 描述，仅作历史参考；实际项目结构请见 README 与 [QuantOffice_Project_Plan.md](./QuantOffice_Project_Plan.md)。
 
@@ -186,7 +186,7 @@ QuantOffice/
 │   │   ├── character_controller.gd     # 角色动画控制
 │   │   └── react_bridge.gd             # React ↔ Godot 通信
 │   └── assets/
-│       ├── sprites/                    # 像素素材
+│       ├── sprites/                    # 资源图
 │       └── fonts/
 │
 ├── tests/                              # 测试用例
@@ -214,7 +214,7 @@ def main():
 
     print(f"🎯 QuantOffice 启动中... http://{args.host}:{args.port}")
     print(f"📊 API 文档: http://localhost:{args.port}/docs")
-    print(f"🏢 像素办公室: http://localhost:{args.port}/")
+    print(f"🏢 Agent 办公室: http://localhost:{args.port}/")
     print()
 
     uvicorn.run(
@@ -249,7 +249,7 @@ setup_logging(level=settings.log_level)
 def create_app() -> FastAPI:
     app = FastAPI(
         title="QuantOffice",
-        description="像素风格量化交易指挥中枢",
+        description="量化交易指挥中枢",
         version="1.0.0",
     )
 
@@ -342,7 +342,7 @@ class QuantOfficePlugin(PluginBase):
     def __init__(self):
         super().__init__("quant_office", "1.0.0")
         self.load_type = "hot"  # 支持热加载
-        self.description = "像素风格量化交易指挥中枢，支持多Agent协作、策略回测、风险监控与可视化交易执行"
+        self.description = "量化交易指挥中枢，支持多Agent协作、策略回测、风险监控与可视化交易执行"
         self.author = "QuantOffice Team"
         self.frontend_entry = "/index.js"  # 前端资源入口
 
@@ -449,9 +449,9 @@ class QuantOfficePlugin(PluginBase):
                     "minimum": 0.1,
                     "maximum": 50.0,
                 },
-                "pixel_fps": {
+                "render_fps": {
                     "type": "integer",
-                    "title": "像素办公室渲染帧率",
+                    "title": "前端渲染帧率",
                     "default": 30,
                     "minimum": 15,
                     "maximum": 60,
@@ -497,7 +497,7 @@ pluginRegistry.registerMenu({
   icon: '🏢',
   pluginName: 'quant-office',
   children: [
-    { key: 'pixel-office', label: '像素办公室', icon: '🖥️' },
+    { key: 'overview', label: '总览仪表盘', icon: '🖥️' },
     { key: 'agent-dashboard', label: 'Agent 面板', icon: '🤖' },
     { key: 'strategy-manager', label: '策略管理', icon: '📈' },
     { key: 'risk-monitor', label: '风控监控', icon: '🛡️' },
@@ -551,7 +551,7 @@ pluginRegistry.registerAsset({
 {
   "name": "quant-office",
   "version": "1.0.0",
-  "description": "像素风格量化交易指挥中枢，支持多Agent协作、策略回测、风险监控与可视化交易执行",
+  "description": "量化交易指挥中枢，支持多Agent协作、策略回测、风险监控与可视化交易执行",
   "author": "QuantOffice Team",
   "main": "plugin.py",
   "load_type": "hot",
@@ -584,9 +584,9 @@ pluginRegistry.registerAsset({
         "minimum": 0.1,
         "maximum": 50.0
       },
-      "pixel_fps": {
+      "render_fps": {
         "type": "integer",
-        "title": "像素办公室渲染帧率",
+        "title": "前端渲染帧率",
         "default": 30,
         "minimum": 15,
         "maximum": 60
@@ -788,9 +788,9 @@ python /path/to/quantcell/plugin_packer.py quantoffice/frontend/src/plugins/quan
 | 维度 | WalletMonitor | QuantOffice（本方案） |
 |------|--------------|---------------------|
 | **业务复杂度** | 单领域（钱包监控） | 多 Agent 协作（数据/策略/风控/执行/报告） |
-| **前端形态** | 传统 React + Ant Design | Godot WebAssembly 像素场景 + React UI Shell |
+| **前端形态** | 传统 React + Ant Design | React + TypeScript + Vite + 纯 CSS 硬阴影 |
 | **实时通信** | 轮询为主 | WebSocket + SSE + EventBus 三通道 |
-| **可视化** | ECharts 图表 | 像素办公室 + ECharts 混合 |
+| **可视化** | ECharts 图表 | Agent 办公室 + ECharts 混合 |
 | **引擎集成** | 无外部引擎 | axon_quant 量化交易引擎 |
 | **多模式 API 适配** | 手动前缀切换 | 环境变量自动适配（VITE_PLUGIN_MODE） |
 | **Godot 资源加载** | 不涉及 | PluginLoader 动态加载 WASM/PCK |
@@ -989,7 +989,7 @@ class QuantOfficeEventBridge:
 1. **独立模式**（`app.py` + `run.py`）：面向个人交易者，一键启动完整服务
 2. **插件模式**（`plugin.py` + `manifest.json`）：面向 QuantCell 生态用户，无缝集成到现有平台
 
-两种模式共享 `core/`、`agents/`、`api/`、`data/`、`services/` 等全部业务代码，仅需维护一套代码库即可同时服务两种场景。Godot 像素办公室通过 `JavaScriptBridge` 动态检测运行模式，自动适配 API 前缀和 WebSocket 地址，确保前端体验一致。
+两种模式共享 `core/`、`agents/`、`api/`、`data/`、`services/` 等全部业务代码，仅需维护一套代码库即可同时服务两种场景。前端通过 `VITE_PLUGIN_MODE` 环境变量动态检测运行模式，自动适配 API 前缀和 WebSocket 地址，确保前端体验一致。
 
 ---
 

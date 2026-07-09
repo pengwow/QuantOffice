@@ -1,13 +1,13 @@
 # QuantOffice
 
-> 像素风格量化交易指挥中枢 — AI-Native Pixel-style Quantitative Trading Command Center
+> 量化交易指挥中枢 — AI-Native Quantitative Trading Command Center
 
-QuantOffice 基于 FastAPI 后端 + **纯前端像素风 SPA**（React + TypeScript + Vite + bun）+ axon_quant 量化引擎，
+QuantOffice 基于 FastAPI 后端 + **前端 SPA**（React + TypeScript + Vite + bun）+ axon_quant 量化引擎，
 将枯燥的量化交易流程转化为一个可视化的"虚拟办公室"，由 1 名首席交易员 + 5 名专业 Agent 协同完成数据、策略、风控、执行、报告全链路工作。
 
 ## 核心特性
 
-- **🏢 像素办公室**：1+5 Agent 拟物化协作场景（**纯 CSS + 硬阴影 + 4px 像素栅格**，零 WASM / 零 Godot）
+- **🏢 Agent 办公室**：1+5 Agent 拟物化协作场景（纯 CSS + 硬阴影 + 4px 栅格，零 WASM / 零 Godot）
 - **🤖 AI-Native**：基于 axon_quant 的 Agent Swarm（`SwarmOrchestrator` + `ReActAgent`）
 - **⚡ 纳秒级风控**：12ns 预交易检查 + AtomicBool 熔断
 - **📈 完整闭环**：数据 → 策略 → 风控 → 执行 → 报告
@@ -19,7 +19,7 @@ QuantOffice 基于 FastAPI 后端 + **纯前端像素风 SPA**（React + TypeScr
 
 ```
 ┌────────────── Browser ──────────────┐
-│  React UI Shell + CSS Pixel Office  │
+│  React UI Shell + Agent Dashboard  │
 └───────────────┬─────────────────────┘
                 │ WebSocket / HTTP (Vite proxy)
 ┌───────────────▼─────────────────────┐
@@ -260,11 +260,11 @@ QuantOffice/
 │   └── src/
 │       ├── main.tsx
 │       ├── App.tsx                # 路由 + 布局
-│       ├── styles/                # 像素风 CSS（pixel.css / global.css）
+│       ├── styles/                # CSS 设计令牌（tokens / global / reset）
 │       ├── components/
-│       │   ├── Layout/            # Sidebar / TopBar / RightPanel
-│       │   └── PixelOffice/       # OfficeScene / Workstation / AgentCharacter
-│       ├── pages/                 # 8 个页面
+│       │   ├── Layout/            # TopNav / TopBar / RightPanel
+│       │   └── AgentAvatar/       # AgentCharacter 头像组件
+│       ├── pages/                 # 9 个页面
 │       ├── api/                   # REST + WebSocket 客户端
 │       ├── stores/                # Zustand (agentStore / uiStore)
 │       ├── lib/                   # agentMeta 等

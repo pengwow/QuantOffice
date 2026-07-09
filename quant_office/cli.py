@@ -29,7 +29,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"QuantOffice 启动中... http://{args.host}:{args.port}")
     print(f"   API 文档:    http://localhost:{args.port}/docs")
-    print(f"   像素办公室:  http://localhost:{args.port}/")
+    print(f"   前端入口:   http://localhost:{args.port}/")
     print(f"   WebSocket:   ws://localhost:{args.port}/ws")
     print()
 

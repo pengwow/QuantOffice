@@ -80,7 +80,7 @@ class QuantOfficePlugin(PluginBase):
         super().__init__("quant-office", __version__)
         self.load_type = "hot"
         self.description = (
-            "像素风格量化交易指挥中枢：1+5 Agent 协作、策略回测、风控监控与可视化交易执行"
+            "QuantOffice — 量化交易指挥中枢：1+5 Agent 协作、策略回测、风控监控与可视化交易执行"
         )
         self.author = "QuantOffice Team"
         self.frontend_entry = "/index.js"
@@ -254,9 +254,9 @@ class QuantOfficePlugin(PluginBase):
                     "minimum": 0.1,
                     "maximum": 50.0,
                 },
-                "pixel_fps": {
+                "render_fps": {
                     "type": "integer",
-                    "title": "像素办公室渲染帧率",
+                    "title": "前端渲染帧率",
                     "default": 30,
                     "minimum": 15,
                     "maximum": 60,

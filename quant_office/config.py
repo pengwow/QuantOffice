@@ -72,8 +72,8 @@ class Settings(BaseSettings):
     circuit_breaker_threshold: int = 5
     circuit_breaker_reset_sec: int = 60
 
-    # ---- 像素办公室 ----
-    pixel_fps: int = 30
+    # ---- 前端 ----
+    render_fps: int = 30
     frontend_static_dir: str = "./frontend/dist"
 
     # ---- 数据库 ----

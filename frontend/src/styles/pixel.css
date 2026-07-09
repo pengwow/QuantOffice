@@ -1,9 +1,9 @@
 /* ============================================================
- * 像素风设计令牌 (Design Tokens)
+ * 设计令牌 (Design Tokens) — 硬阴影 / 零圆角 / 4px 栅格
  * ============================================================ */
 
 :root {
-  /* ----- 像素调色板 ----- */
+  /* ----- 调色板 ----- */
   --pixel-bg: #f0f2f5;          /* 整体背景 */
   --pixel-dark: #2d3436;        /* 主文字 / 边框 */
   --pixel-white: #ffffff;       /* 卡片 / 面板 */
@@ -27,7 +27,7 @@
 }
 
 /* ============================================================
- * 像素画通用工具类
+ * 通用工具类
  * ============================================================ */
 
 /* 硬阴影（无模糊） */
@@ -41,7 +41,7 @@
   box-shadow: 6px 6px 0 var(--pixel-dark);
 }
 
-/* 像素风按钮基类 */
+/* 按钮基类 */
 .pixel-btn {
   display: inline-flex;
   align-items: center;
@@ -84,7 +84,7 @@
   background: var(--pixel-yellow);
 }
 
-/* 像素风卡片 */
+/* 卡片 */
 .pixel-card {
   background: var(--pixel-white);
   border: var(--border-thick);
@@ -93,7 +93,7 @@
   padding: var(--space-4);
 }
 
-/* 像素风输入框 */
+/* 输入框 */
 .pixel-input {
   width: 100%;
   padding: var(--space-2) var(--space-3);
@@ -179,7 +179,7 @@
   75%      { transform: translateY(0) scaleY(1.05); }
 }
 
-/* 像素边框按钮（不投影，模拟像素描边） */
+/* 描边按钮（不投影，模拟实色描边） */
 .pixel-border {
   border-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'><rect width='2' height='2' fill='%232d3436'/></svg>") 2 stretch;
   border: 4px solid transparent;

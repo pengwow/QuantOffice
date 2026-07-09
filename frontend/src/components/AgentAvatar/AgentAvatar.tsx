@@ -1,5 +1,5 @@
 /**
- * AgentCharacter — 纯 CSS 像素角色
+ * AgentAvatar — 16-bit 风格的小人
  *
  * 用 box-shadow + 多个伪元素拼出"16-bit"风格的小人，
  * 通过 CSS 变量（--uniform / --hat / --accent / --leg）区分 6 个角色。
@@ -8,7 +8,7 @@
 import { memo } from 'react';
 import clsx from 'clsx';
 import type { Agent, AgentRole } from '@/types';
-import styles from './AgentCharacter.module.css';
+import styles from './AgentAvatar.module.css';
 
 interface Props {
   role: AgentRole;
@@ -30,7 +30,7 @@ const PALETTE: Record<AgentRole, { uniform: string; hat: string; accent: string;
 
 const SIZE = { sm: 0.75, md: 1, lg: 1.5 } as const;
 
-function AgentCharacterImpl({ role, status, size = 'md', selected, onClick }: Props) {
+function AgentAvatarImpl({ role, status, size = 'md', selected, onClick }: Props) {
   const palette = PALETTE[role];
   const scale = SIZE[size];
 
@@ -61,4 +61,4 @@ function AgentCharacterImpl({ role, status, size = 'md', selected, onClick }: Pr
   );
 }
 
-export const AgentCharacter = memo(AgentCharacterImpl);
+export const AgentAvatar = memo(AgentAvatarImpl);

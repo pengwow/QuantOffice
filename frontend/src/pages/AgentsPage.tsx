@@ -8,7 +8,7 @@ import { useAgentByRole } from '@/stores/agentStore';
 import { useUiStore } from '@/stores/uiStore';
 import { AGENT_META, AGENT_ROLES } from '@/lib/agentMeta';
 import type { AgentRole } from '@/types';
-import { AgentCharacter } from '@/components/PixelOffice/AgentCharacter';
+import { AgentAvatar } from '@/components/AgentAvatar/AgentAvatar';
 import styles from './Pages.module.css';
 
 export function AgentsPage() {
@@ -52,7 +52,7 @@ function AgentCard({ role, onStart, onStop, onView }: { role: AgentRole; onStart
   return (
     <div className={styles.agentCard} onClick={onView}>
       <div className={styles.agentCardHead}>
-        <AgentCharacter role={role} status={status} size="sm" />
+        <AgentAvatar role={role} status={status} size="sm" />
         <div>
           <div className={styles.agentCardName}>{meta.name}</div>
           <div className={styles.agentCardRole}>{role.toUpperCase()}</div>

@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "entry": "index.tsx",
   "pluginName": "quant-office",
-  "displayName": "QuantOffice 像素交易指挥中枢",
-  "description": "纯前端像素风 SPA，提供 1+5 Agent 可视化协作场景",
+  "displayName": "QuantOffice 量化交易指挥中枢",
+  "description": "1+5 Agent 协作、策略回测、风控监控与可视化交易执行",
   "permissions": [
     "websocket.subscribe",
     "menu.register",

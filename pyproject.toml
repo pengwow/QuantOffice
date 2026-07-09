@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 [project]
 name = "quant-office"
 version = "0.1.0"
-description = "QuantOffice — 像素风格量化交易指挥中枢 (AI-Native Pixel-style Quantitative Trading Command Center)"
+description = "QuantOffice — 量化交易指挥中枢 (AI-Native Quantitative Trading Command Center)"
 readme = "README.md"
 requires-python = ">=3.14"
 license = { text = "MIT" }

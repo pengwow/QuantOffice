@@ -1,7 +1,7 @@
 {
   "name": "quant-office",
   "version": "0.1.0",
-  "description": "像素风格量化交易指挥中枢：1+5 Agent 协作、策略回测、风控监控与可视化交易执行",
+  "description": "QuantOffice — 量化交易指挥中枢：1+5 Agent 协作、策略回测、风控监控与可视化交易执行",
   "author": "QuantOffice Team",
   "main": "quant_office.plugin",
   "entry": "register_plugin",
@@ -35,9 +35,9 @@
         "minimum": 0.1,
         "maximum": 50.0
       },
-      "pixel_fps": {
+      "render_fps": {
         "type": "integer",
-        "title": "像素办公室渲染帧率",
+        "title": "前端渲染帧率",
         "default": 30,
         "minimum": 15,
         "maximum": 60
@@ -47,5 +47,5 @@
   "frontend_entry": "/index.js",
   "dependencies": [],
   "category": "quantitative-trading",
-  "tags": ["quant", "ai-agent", "pixel-style", "axon-quant"]
+  "tags": ["quant", "ai-agent", "axon-quant"]
 }

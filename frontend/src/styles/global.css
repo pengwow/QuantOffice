@@ -1,6 +1,6 @@
 /* ============================================================
  * QuantOffice — 全局样式入口
- * 像素风设计令牌 + 重置 + 字体 + 动画工具类
+ * 设计令牌 + 重置 + 字体 + 动画工具类
  * ============================================================ */
 
 @import './pixel.css';
@@ -12,7 +12,7 @@
   --font-sans: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* 间距（基于 4px 像素栅格） */
+  /* 间距（基于 4px 栅格） */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -23,10 +23,10 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  /* 圆角（像素风永不用圆角） */
+  /* 圆角（默认不使用） */
   --radius-none: 0;
 
-  /* 阴影（像素风：硬阴影，无模糊） */
+  /* 阴影（硬阴影，无模糊） */
   --shadow-pixel-sm: 2px 2px 0 var(--pixel-dark);
   --shadow-pixel: 4px 4px 0 var(--pixel-dark);
   --shadow-pixel-lg: 6px 6px 0 var(--pixel-dark);
@@ -41,7 +41,7 @@
   --right-panel-width: 320px;
   --topbar-height: 56px;
 
-  /* 字体大小（像素风偏小） */
+  /* 字体大小 */
   --text-xs: 10px;
   --text-sm: 12px;
   --text-base: 14px;
@@ -75,7 +75,7 @@ body {
   flex-direction: column;
 }
 
-/* 像素字体类 */
+/* 8-bit 风格字体类 */
 .font-pixel {
   font-family: var(--font-pixel);
   letter-spacing: 0.5px;
@@ -115,7 +115,7 @@ body {
 .uppercase { text-transform: uppercase; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* 滚动条（像素风） */
+/* 滚动条 */
 ::-webkit-scrollbar {
   width: 12px;
   height: 12px;

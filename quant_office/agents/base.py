@@ -12,7 +12,7 @@ from ..logging_config import get_logger
 
 
 class AgentStatus(str, Enum):
-    """Agent 可视化状态，对应前端像素办公室颜色。"""
+    """Agent 可视化状态，对应前端 Agent 卡片状态色。"""
 
     IDLE = "idle"          # 绿
     WORKING = "working"    # 黄

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "QuantOffice 前端 — 纯前端像素风 SPA（Vite + React + TypeScript）",
+  "description": "QuantOffice 前端 SPA（Vite + React + TypeScript）",
   "packageManager": "bun@1.1.34",
   "engines": {
     "bun": ">=1.1.0"

@@ -21,7 +21,7 @@
   animation: blink 0.4s steps(2) infinite;
 }
 
-/* 头（4×4 像素） */
+/* 头（4×4 网格） */
 .head {
   width: 16px;
   height: 16px;
@@ -43,7 +43,7 @@
 .head::before { left: 4px; }
 .head::after  { right: 4px; }
 
-/* 头发 / 帽子（顶部 2px 像素） */
+/* 头发 / 帽子（顶部 2px 描边） */
 .hat {
   position: absolute;
   top: -2px;
@@ -78,7 +78,7 @@
   background: var(--accent);
 }
 
-/* 手臂（左右两个像素块） */
+/* 手臂（左右两块） */
 .arm {
   position: absolute;
   top: 6px;

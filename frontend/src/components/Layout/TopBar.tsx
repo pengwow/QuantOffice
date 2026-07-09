@@ -8,7 +8,7 @@ import { api } from '@/api/client';
 import styles from './TopBar.module.css';
 
 const TITLES: Record<string, string> = {
-  '/':           '像素办公室',
+  '/':           '总览仪表盘',
   '/dashboard':  '总览仪表盘',
   '/agents':     'Agent 面板',
   '/strategies': '策略管理',

@@ -31,7 +31,7 @@ export function TopNav() {
         <span className={styles.brandIcon}>▣</span>
         <div>
           <div className={styles.brandText}>QUANT OFFICE</div>
-          <div className={styles.brandSub}>v0.2.2 · 像素交易指挥中枢</div>
+          <div className={styles.brandSub}>v0.2.2 · 量化交易指挥中枢</div>
         </div>
       </div>
 

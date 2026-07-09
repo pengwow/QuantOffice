@@ -33,7 +33,7 @@ export interface Agent {
   emoji: string;
   status: AgentStatus;
   color: string;
-  position: { x: number; y: number };  // 像素风办公室内的相对坐标
+  position: { x: number; y: number };  // 办公室内工位的相对坐标
   metrics: AgentMetrics;
   current_task?: string;
   updated_at: string;

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuantOffice — 像素风格量化交易指挥中枢</title>
+    <title>QuantOffice — 量化交易指挥中枢</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -36,7 +36,7 @@
             height: 100vh;
         }
 
-        /* ===== 像素字体工具类 ===== */
+        /* ===== 8-bit 字体工具类 ===== */
         .pixel-font {
             font-family: 'Press Start 2P', cursive;
         }
@@ -257,7 +257,7 @@
         .stat-value.up { color: var(--pixel-red); }
         .stat-value.down { color: var(--pixel-green); }
 
-        /* ===== 像素办公室场景 ===== */
+        /* ===== Agent 办公室场景 ===== */
         .office-scene {
             background: var(--pixel-white);
             border: 4px solid var(--pixel-dark);
@@ -331,7 +331,7 @@
             border: 2px solid var(--pixel-dark);
         }
 
-        /* 角色占位符 - 像素风格 */
+        /* 角色占位符 - 8-bit 风格 */
         .agent-character {
             position: absolute;
             width: 32px;
@@ -347,7 +347,7 @@
             z-index: 20;
         }
 
-        /* 像素人 */
+        /* 8-bit 角色 */
         .pixel-person {
             width: 32px;
             height: 40px;
@@ -681,7 +681,7 @@
             .sidebar { width: 200px; }
         }
 
-        /* 滚动条像素风格 */
+        /* 滚动条 */
         ::-webkit-scrollbar {
             width: 12px;
         }
@@ -714,7 +714,7 @@
             <div class="nav-section">
                 <div class="nav-title">功能</div>
                 <div class="nav-item active" data-page="office">
-                    <span>🏢</span> 像素办公室
+                    <span>🏢</span> 总览仪表盘
                 </div>
                 <div class="nav-item" data-page="agents">
                     <span>🤖</span> Agent 团队
@@ -758,7 +758,7 @@
         <!-- 中间主内容 -->
         <main class="main-content">
             <div class="top-bar">
-                <div class="page-title" id="pageTitle">🏢 像素风格量化交易办公室</div>
+                <div class="page-title" id="pageTitle">🏢 量化交易办公室</div>
                 <div class="top-actions">
                     <button class="pixel-btn" onclick="toggleAlert()">🚨 模拟风控警报</button>
                     <button class="pixel-btn primary" onclick="refreshData()">🔄 刷新数据</button>
@@ -766,7 +766,7 @@
             </div>
 
             <div class="content-area">
-                <!-- 页面1: 像素办公室 -->
+                <!-- 页面1: 总览仪表盘 -->
                 <div class="page-section active" id="page-office">
                     <div class="office-scene">
                         <div class="office-title">🎯 QuantOffice 虚拟交易大厅</div>
@@ -979,7 +979,7 @@
 
                     <div class="info-card">
                         <h3>🎯 架构概览</h3>
-                        <p>QuantOffice 采用前后端分离架构，前端基于 <strong>React + Godot WebAssembly</strong> 实现像素风格可视化，后端基于 <strong>FastAPI + Python</strong> 提供高性能 API 与实时数据推送，底层集成 <strong>axon_quant</strong> 量化交易引擎。</p>
+                        <p>QuantOffice 采用前后端分离架构，前端基于 <strong>React + TypeScript + Vite + bun</strong> 实现硬阴影风格可视化，后端基于 <strong>FastAPI + Python</strong> 提供高性能 API 与实时数据推送，底层集成 <strong>axon_quant</strong> 量化交易引擎。</p>
                     </div>
 
                     <div class="arch-diagram">
@@ -1053,7 +1053,7 @@
 
                     <div class="info-card">
                         <h3>🌍 社会价值</h3>
-                        <p>量化交易长期以来被外界误解为"神秘的赚钱机器"，QuantOffice 的像素办公室设计将量化交易的完整工作流<strong>透明化、游戏化</strong>，大幅降低公众理解门槛。</p>
+                        <p>量化交易长期以来被外界误解为"神秘的赚钱机器"，QuantOffice 的 Agent 办公室设计将量化交易的完整工作流<strong>透明化、游戏化</strong>，大幅降低公众理解门槛。</p>
                         <div class="highlight-box">
                             <strong>应用场景：</strong><br>
                             • <strong>教育培训</strong>：学生通过"观察办公室里的角色在做什么"来学习量化交易全流程<br>
@@ -1065,7 +1065,7 @@
                     <div class="info-card">
                         <h3>🎮 创新亮点</h3>
                         <ul>
-                            <li><strong>拟物化设计</strong>：参考腾讯 Marvis 的像素办公室，将抽象的多 Agent 协作具象为"看得见的工作场景"</li>
+                            <li><strong>拟物化设计</strong>：参考腾讯 Marvis 的 Agent 办公室，将抽象的多 Agent 协作具象为"看得见的工作场景"</li>
                             <li><strong>游戏化交互</strong>：点击角色即可下达指令、调整参数，像玩模拟经营游戏一样管理交易策略</li>
                             <li><strong>回测时间旅行</strong>：支持"回放"历史某一天的策略执行过程，像看电影一样复盘</li>
                             <li><strong>风险可视化</strong>：RiskAgent 的红灯警报、屏幕闪烁等效果让风险感知从"读数字"变为"看动画"</li>
@@ -1079,18 +1079,18 @@
 
                     <div class="info-card">
                         <h3>🎯 想解决什么问题</h3>
-                        <p>当前量化交易平台的操作界面普遍枯燥、数据堆砌严重，交易员需要在多个终端之间切换，难以直观感知策略执行状态与风险敞口。QuantOffice 将枯燥的量化交易流程转化为可视化的像素风格"虚拟办公室"，让交易员像指挥一支专业团队一样管理量化策略，大幅降低认知负荷与操作门槛。</p>
+                        <p>当前量化交易平台的操作界面普遍枯燥、数据堆砌严重，交易员需要在多个终端之间切换，难以直观感知策略执行状态与风险敞口。QuantOffice 将枯燥的量化交易流程转化为可视化的"虚拟办公室"，让交易员像指挥一支专业团队一样管理量化策略，大幅降低认知负荷与操作门槛。</p>
                     </div>
 
                     <div class="info-card">
                         <h3>💡 灵感来源</h3>
-                        <p>灵感来源于腾讯 <strong>Marvis（马维斯）</strong> 的像素风格多 Agent 办公室设计。马维斯通过"1+5 Agent 协作架构"将系统级 AI 操作具象化为一个虚拟办公场景，每个 Agent 都有独立的工位和可视化状态。</p>
-                        <p>我们认为这种"拟物化 + 游戏化"的设计理念与量化交易场景高度契合——量化交易本身就是多角色协同（数据、策略、风控、执行、报告）的复杂系统，用像素办公室的形式呈现，既能让专业交易员获得沉浸式掌控感，也能让新手快速理解量化交易的全流程。</p>
+                        <p>灵感来源于腾讯 <strong>Marvis（马维斯）</strong> 的多 Agent 办公室设计。马维斯通过"1+5 Agent 协作架构"将系统级 AI 操作具象化为一个虚拟办公场景，每个 Agent 都有独立的工位和可视化状态。</p>
+                        <p>我们认为这种"拟物化 + 游戏化"的设计理念与量化交易场景高度契合——量化交易本身就是多角色协同（数据、策略、风控、执行、报告）的复杂系统，用 Agent 办公室的形式呈现，既能让专业交易员获得沉浸式掌控感，也能让新手快速理解量化交易的全流程。</p>
                     </div>
 
                     <div class="info-card">
                         <h3>📦 产品形态</h3>
-                        <p>QuantOffice 是一款基于 <strong>Godot 引擎</strong> 开发的 2D 像素风格量化交易可视化系统。前端以 React 组件形式嵌入 Godot 导出的 WebAssembly 像素办公室场景，后端采用 <strong>FastAPI + Python</strong> 架构，底层量化执行引擎集成 <strong>axon_quant</strong>。</p>
+                        <p>QuantOffice 是一款基于 <strong>React + TypeScript + Vite + bun</strong> 开发的硬阴影风格量化交易可视化系统。前端采用纯前端技术栈实现 Agent 办公室场景，后端采用 <strong>FastAPI + Python</strong> 架构，底层量化执行引擎集成 <strong>axon_quant</strong>。</p>
                         <p>用户通过浏览器即可访问一个活生生的"量化交易办公室"：首席交易员坐镇中央，数据分析师、策略研究员、风控官、执行交易员、报告专员各司其职，实时显示行情数据、策略状态、风险指标与交易执行进度。</p>
                     </div>
                 </div>
@@ -1114,7 +1114,7 @@
                         <ul>
                             <li><strong>日常策略监控</strong>：开盘期间实时观察多个策略的运行状态与健康度</li>
                             <li><strong>策略回测审查</strong>：查看历史回测的绩效报告与可视化分析</li>
-                            <li><strong>风险事件响应</strong>：当风险指标触发阈值时，通过像素办公室的"警报动画"第一时间感知</li>
+                            <li><strong>风险事件响应</strong>：当风险指标触发阈值时，通过 Agent 办公室的"警报动画"第一时间感知</li>
                             <li><strong>团队协同复盘</strong>：多人同时在线查看办公室状态，讨论策略调整</li>
                             <li><strong>量化交易教学</strong>：向学生/客户演示量化交易的完整工作流</li>
                         </ul>
@@ -1139,7 +1139,7 @@
                     <div class="info-card">
                         <h3>🚀 Phase 1: 原型验证 (Week 1-2)</h3>
                         <ul>
-                            <li>Godot 像素办公室基础场景搭建</li>
+                            <li>Agent 办公室基础场景搭建</li>
                             <li>6 个工位静态布局 + 角色占位</li>
                             <li>idle / working / alert 三种动画状态设计</li>
                         </ul>
@@ -1175,7 +1175,7 @@
                     <div class="info-card">
                         <h3>🎨 Phase 5: 可视化联动 (Week 9-10)</h3>
                         <ul>
-                            <li>Agent 状态 ↔ 像素角色动画联动</li>
+                            <li>Agent 状态 ↔ 角色动画联动</li>
                             <li>风险报警可视化（红灯闪烁 + 屏幕震动）</li>
                             <li>行情数据 ↔ 办公室屏幕内容联动</li>
                         </ul>
@@ -1484,7 +1484,7 @@ class QuantOfficeEventBridge:
         self.event_bus.subscribe("backtest_complete", self._on_backtest_complete)
     
     async def _on_risk_alert(self, event):
-        # RiskAgent 红灯警报 → 前端像素办公室闪烁
+        # RiskAgent 红灯警报 → 前端 Agent 办公室闪烁
         await self.ws_manager.broadcast({
             "type": "risk_alert",
             "agent": "RiskAgent",
@@ -1577,7 +1577,7 @@ class QuantOfficeEventBridge:
         const pageTitle = document.getElementById('pageTitle');
 
         const pageTitles = {
-            'office': '🏢 像素风格量化交易办公室',
+            'office': '🏢 量化交易办公室',
             'agents': '🤖 Agent 协作团队',
             'architecture': '⚙️ 技术架构',
             'plugin-arch': '🔌 QuantCell 插件架构',

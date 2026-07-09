@@ -586,7 +586,7 @@ class RiskAgent:
             "timestamp": result.timestamp,
             "suggested_action": result.suggested_action,
         }
-        # 通过 WebSocket 推送到前端像素办公室
+        # 通过 WebSocket 推送到前端 Agent 办公室
         await self._emit_risk_alert(alert)
 ```
 
@@ -988,7 +988,7 @@ class QuantOfficeEventBridge:
         self.event_bus.subscribe("backtest_complete", self._on_backtest_complete)
         
     async def _on_order_filled(self, event):
-        # 转发到前端像素办公室
+        # 转发到前端 Agent 办公室
         await self.ws_manager.broadcast({
             "type": "order_filled",
             "agent": "ExecutionAgent",
@@ -1050,7 +1050,7 @@ for step in range(50000):
 | 维度 | axon_quant 能力 | QuantOffice 集成优化 |
 |---|---|---|
 | **回测速度** | > 1M events/sec | 前端显示回测进度条，大回测任务后台异步执行 |
-| **撮合延迟** | < 1μs (P99) | 实盘模式下 ExecutionAgent 状态实时同步到像素办公室 |
+| **撮合延迟** | < 1μs (P99) | 实盘模式下 ExecutionAgent 状态实时同步到 Agent 办公室 |
 | **风控检查** | 12ns | RiskAgent 绿灯/黄灯/红灯状态毫秒级刷新 |
 | **数据加载** | 1M tick < 15ms | DataAgent 预加载常用数据到内存，前端秒开 |
 | **RL 训练** | > 10K steps/sec | 训练过程可视化（TensorBoard 嵌入 + Godot 进度动画） |
