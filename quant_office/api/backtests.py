@@ -1,15 +1,18 @@
-"""回测 API（与前端 BacktestResult 形状对齐）。"""
+"""回测 API（与前端 BacktestResult 形状对齐）。
+
+真实流程：通过 ``engine_adapter`` 调 axon_quant.BacktestEngine + L1MatchingEngine
+执行回测，结果入库。
+"""
 from __future__ import annotations
 
 import json
-import math
-import random
 import uuid
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
 
+from ..core.engine_adapter import get_engine_adapter
 from ..data.database import get_session_factory
 from ..data.models import Backtest, Strategy
 from ..services.api_schemas import backtest_to_response
@@ -17,19 +20,20 @@ from ..services.api_schemas import backtest_to_response
 router = APIRouter(prefix="/backtests", tags=["backtests"])
 
 
-def _gen_equity_curve(start: datetime, end: datetime, total_return: float) -> list[dict]:
-    random.seed(total_return * 1000)
-    days = max((end - start).days, 7)
-    n = min(days, 90)
-    drift = total_return / n
-    pts: list[dict] = []
-    for i in range(n + 1):
-        t = start + timedelta(days=int(days * i / n))
-        shock = random.gauss(0, 0.012)
-        equity = 100_000.0 * (1 + drift * i + shock * math.sqrt(i + 1) * 0.4)
-        pts.append({"date": t.strftime("%Y-%m-%d"), "equity": round(equity, 2)})
-    pts[-1]["equity"] = round(100_000.0 * (1 + total_return), 2)
-    return pts
+def _curve_to_dict(curve: list, start: datetime, end: datetime) -> list[dict]:
+    """把 equity_curve(float list) 转换为前端期望的 [{date, equity}, ...]。"""
+    if not curve:
+        return []
+    n = len(curve)
+    days = max((end - start).days, 1)
+    out: list[dict] = []
+    for i, equity in enumerate(curve):
+        t = start + timedelta(seconds=int(days * 86400 * i / max(n - 1, 1)))
+        out.append({
+            "date": t.strftime("%Y-%m-%d"),
+            "equity": round(float(equity), 2),
+        })
+    return out
 
 
 @router.get("")
@@ -60,6 +64,10 @@ async def run_backtest(body: dict) -> dict:
         "start": "2025-01-01",         // 可选，默认 1 年前
         "end":   "2025-12-31",         // 可选，默认今天
       }
+
+    真实实现：调 ``engine_adapter.run_backtest(strategy_name)``，
+    axon 模式用 axon_quant.BacktestEngine + L1MatchingEngine 真跑，
+    fallback 模式用 SMA 动量策略合成演示数据。
     """
     strategy_id = body.get("strategy_id")
     if not strategy_id:
@@ -71,7 +79,6 @@ async def run_backtest(body: dict) -> dict:
         if s is None:
             raise HTTPException(404, f"Strategy not found: {strategy_id}")
 
-        # 解析回测区间
         try:
             end_dt = datetime.fromisoformat(body["end"]) if body.get("end") else datetime.utcnow()
         except ValueError:
@@ -83,28 +90,22 @@ async def run_backtest(body: dict) -> dict:
         if start_dt >= end_dt:
             raise HTTPException(422, "start must be before end")
 
-        # 合成回测结果（演示用，真实环境接 axon_quant）
-        random.seed(uuid.uuid4().int % 100000)
-        total_return = round(random.uniform(0.05, 0.85), 4)
-        days = max((end_dt - start_dt).days, 1)
-        annual = round(total_return * (365 / days), 4)
-        sharpe = round(random.uniform(0.8, 2.2), 2)
-        max_dd = round(random.uniform(0.05, 0.25), 4)
-        win = round(random.uniform(0.42, 0.68), 4)
-        n_trades = random.randint(45, 280)
+        # ---- 真实回测 ----
+        engine = get_engine_adapter()
+        result = engine.run_backtest(strategy_name=s.name or strategy_id)
 
         bt = Backtest(
             id=f"bt-{uuid.uuid4().hex[:8]}",
             strategy_id=strategy_id,
             period_start=start_dt,
             period_end=end_dt,
-            total_return=total_return,
-            annual_return=annual,
-            sharpe=sharpe,
-            max_drawdown=max_dd,
-            win_rate=win,
-            trades=n_trades,
-            equity_curve=json.dumps(_gen_equity_curve(start_dt, end_dt, total_return)),
+            total_return=float(result.total_return or 0.0),
+            annual_return=float(result.annual_return or 0.0),
+            sharpe=float(result.sharpe_ratio or 0.0),
+            max_drawdown=float(result.max_drawdown or 0.0),
+            win_rate=float(result.win_rate or 0.0),
+            trades=int(result.trades or 0),
+            equity_curve=json.dumps(_curve_to_dict(result.equity_curve, start_dt, end_dt)),
             created_at=datetime.utcnow(),
         )
         session.add(bt)

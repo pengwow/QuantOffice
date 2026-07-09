@@ -1,13 +1,21 @@
-"""成交 API（与前端 Trade 形状对齐）。"""
+"""成交 API（与前端 Trade 形状对齐）。
+
+真实流程：调 ``engine_adapter.submit_order``（axon 模式用 L1MatchingEngine 真撮合，
+fallback 模式内存成交），结果写入 ``qo_trades`` 表。
+"""
 from __future__ import annotations
 
-import random
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import select
 
+from ..core.engine_adapter import (
+    OrderRequest,
+    Portfolio,
+    get_engine_adapter,
+)
 from ..data.database import get_session_factory
 from ..data.models import Strategy, Trade
 from ..services.api_schemas import trade_to_response
@@ -47,11 +55,15 @@ async def get_trade(trade_id: str) -> dict:
 
 @router.post("", status_code=201)
 async def submit_trade(body: dict) -> dict:
-    """提交一笔模拟成交（演示用：随机 pnl + 状态）。"""
+    """提交一笔成交（真实调 engine_adapter.submit_order）。"""
     symbol = (body.get("symbol") or "BTCUSDT").upper()
     side = body.get("side", "buy")
     qty = float(body.get("qty") or body.get("quantity") or 0)
-    price = float(body.get("price") or SYMBOL_PRICE.get(symbol, 100.0))
+    price = body.get("price")
+    if price is None:
+        price = SYMBOL_PRICE.get(symbol, 100.0)
+    price = float(price)
+    order_type = body.get("order_type") or ("limit" if price else "market")
     strategy_id = body.get("strategy_id") or "strat-momentum-btc"
 
     if side not in ("buy", "sell"):
@@ -64,19 +76,37 @@ async def submit_trade(body: dict) -> dict:
         s = await session.get(Strategy, strategy_id)
         if s is None:
             raise HTTPException(404, f"Strategy not found: {strategy_id}")
-        random.seed(uuid.uuid4().int % 100000)
-        pnl = round(random.gauss(50, 80), 2)
-        status = random.choices(["filled", "filled", "filled", "submitted"], k=1)[0]
+
+        # ---- 真实下单（先风控再撮合） ----
+        engine = get_engine_adapter()
+        portfolio = Portfolio(
+            cash=100_000.0,
+            positions={s.symbol: 1.0} if s.symbol else {},
+        )
+        req = OrderRequest(
+            symbol=symbol,
+            side=side,
+            quantity=qty,
+            order_type=order_type,
+            price=price,
+        )
+        result = await engine.submit_order(req, portfolio)
+        fill_price = float(result.filled_price or price)
+        # 简化：买单 cost = qty*price，pnl = 0；卖单释放现金
+        pnl = 0.0
+        if result.status == "rejected":
+            raise HTTPException(400, f"order rejected: {result.reason}")
+
         t = Trade(
             id=f"trade-{uuid.uuid4().hex[:10]}",
             strategy_id=strategy_id,
-            order_id=f"order-{uuid.uuid4().hex[:10]}",
+            order_id=result.order_id or f"order-{uuid.uuid4().hex[:10]}",
             symbol=symbol,
             side=side,
             qty=qty,
-            price=price,
+            price=fill_price,
             pnl=pnl,
-            status=status,
+            status=result.status,
             created_at=datetime.utcnow(),
         )
         session.add(t)

@@ -4,6 +4,7 @@
 - 启动 / 停止全部
 - 心跳上报（→ WebSocket 推送 agent_status）
 - 注册业务 handler（→ EventBus 监听）
+- 启动 RiskMonitor 周期风控扫描
 """
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ from ..agents import AGENT_REGISTRY
 from ..agents.base import AgentStatus, BaseAgent
 from ..logging_config import get_logger
 from .event_publisher import EventPublisher, get_event_publisher
+from .risk_monitor import RiskMonitor, get_risk_monitor
 from .websocket_manager import WebSocketManager, get_websocket_manager
 
 logger = get_logger("core.scheduler")
@@ -29,9 +31,11 @@ class AgentScheduler:
         self,
         ws_manager: WebSocketManager | None = None,
         event_publisher: EventPublisher | None = None,
+        risk_monitor: RiskMonitor | None = None,
     ) -> None:
         self.ws_manager = ws_manager or get_websocket_manager()
         self.event_publisher = event_publisher or get_event_publisher()
+        self.risk_monitor = risk_monitor or get_risk_monitor()
         self._agents: Dict[str, BaseAgent] = {}
         self._heartbeat_task: Optional[asyncio.Task] = None
         self._running = False
@@ -52,12 +56,14 @@ class AgentScheduler:
                 logger.exception("Agent 启动失败 %s: %s", name, exc)
                 agent.status = AgentStatus.ERROR
         self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
+        await self.risk_monitor.start()
         logger.info("AgentScheduler 已启动，共 %d 个 Agent", len(self._agents))
 
     async def stop_all(self) -> None:
         if not self._running:
             return
         self._running = False
+        await self.risk_monitor.stop()
         if self._heartbeat_task:
             self._heartbeat_task.cancel()
             try:
