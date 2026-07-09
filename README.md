@@ -38,17 +38,62 @@ QuantOffice 基于 FastAPI 后端 + Godot 像素场景前端 + axon_quant 量化
 
 ## 快速开始
 
+### 依赖管理工具
+
+QuantOffice 使用 [uv](https://github.com/astral-sh/uv) 进行依赖管理（同样兼容 pip）：
+
+| 工具 | 锁定文件 | 安装速度 | 推荐场景 |
+|------|---------|---------|---------|
+| **uv** | `uv.lock` | 极快（Rust 实现） | 开发 / CI / Docker |
+| pip | `requirements.txt` | 慢 | 兼容旧环境 |
+
 ### 独立运行模式
 
+#### 方式一：使用 uv（推荐）
+
 ```bash
-# 安装依赖
-pip install -e ".[dev]"
+# 安装 uv（如未安装）
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 同步依赖（含开发依赖）
+uv sync
 
 # 启动后端
-python run.py --host 0.0.0.0 --port 8000 --reload
+uv run python run.py --host 0.0.0.0 --port 8000 --reload
 
 # 访问 API 文档
 open http://localhost:8000/docs
+```
+
+#### 方式二：使用 pip
+
+```bash
+# 安装运行时依赖
+pip install -r requirements.txt
+
+# 安装开发依赖
+pip install -r requirements-dev.txt
+
+# 或直接安装为可编辑模式
+pip install -e "."
+
+# 启动后端
+python run.py --host 0.0.0.0 --port 8000 --reload
+```
+
+#### 常用 Make 命令
+
+```bash
+make help          # 查看所有命令
+make install       # 安装 uv
+make sync          # uv sync --no-dev
+make sync-dev      # uv sync（默认包含 dev 组）
+make dev           # 启动开发服务器（热重载）
+make test          # 运行测试
+make test-cov      # 测试 + 覆盖率
+make lint          # ruff check
+make fmt           # ruff format
+make lock-export   # 同步 pyproject.toml -> requirements.txt
 ```
 
 ### 插件运行模式 (QuantCell)
@@ -67,8 +112,13 @@ python service_manager.py restart backend
 ```
 QuantOffice/
 ├── run.py                         # 独立模式入口
-├── pyproject.toml
-├── manifest.json                  # 插件清单
+├── pyproject.toml                 # 项目元数据 + 依赖声明
+├── uv.lock                        # uv 锁定文件（依赖解析结果）
+├── requirements.txt               # pip 运行时依赖（uv export 生成）
+├── requirements-dev.txt           # pip 开发依赖（uv export 生成）
+├── Makefile                       # 常用命令
+├── .python-version                # uv Python 版本锁定（3.12）
+├── manifest.json                  # QuantCell 插件清单
 ├── quant_office/                  # 核心代码
 │   ├── app.py                     # 独立模式 FastAPI 应用
 │   ├── plugin.py                  # 插件模式 PluginBase

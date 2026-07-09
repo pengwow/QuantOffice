@@ -29,23 +29,20 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=8.0",
-    "pytest-asyncio>=0.23",
-    "pytest-cov>=4.1",
-    "ruff>=0.4",
-]
-axon = [
-    "axon_quant==0.3.0",
-]
-rl = [
-    "stable-baselines3>=2.3",
-    "gymnasium>=0.29",
-    "torch>=2.2",
-]
+# 可选：axon_quant 真实引擎（需 Python 3.14+）
+# 注意：axon_quant 0.3.0 要求 Python 3.14+，与本项目默认 Python 3.10+ 互斥
+# 用法：先安装 Python 3.14，再 `uv sync --extra axon`
+# axon = ["axon_quant==0.3.0"]
+# 可选：RL 训练（torch/gymnasium/stable-baselines3）
+# 用法：`uv sync --extra rl`
+# rl = ["stable-baselines3>=2.3", "gymnasium>=0.29", "torch>=2.2"]
 
 [project.scripts]
-quant-office = "run:main"
+quant-office = "quant_office.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/pengwow/QuantOffice"
+Repository = "https://github.com/pengwow/QuantOffice"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -58,3 +55,18 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+
+# ==================== uv 配置 ====================
+[tool.uv]
+# 不再使用 dev-dependencies（已迁移到 [dependency-groups].dev）
+
+[dependency-groups]
+# 开发依赖（uv sync 自动安装）
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=4.1",
+    "ruff>=0.4",
+]
+# 可选：axon_quant 真实引擎（需 Python 3.14+），安装：uv sync --extra axon
+# 可选：RL 训练（torch/gymnasium/stable-baselines3），安装：uv sync --extra rl

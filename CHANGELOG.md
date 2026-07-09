@@ -19,7 +19,18 @@
 - 单元测试 + 集成测试（17 个用例全部通过）
 - 端到端冒烟测试（健康检查、Agent 列表、回测、下单、风控、Dashboard）
 
+### 依赖管理（uv）
+- 使用 [uv](https://github.com/astral-sh/uv) 作为推荐依赖管理工具
+- `pyproject.toml` 添加 `[tool.uv]` 与 `[dependency-groups]` 配置
+- 生成 `uv.lock`（51 个包已锁定）
+- `.python-version` 锁定 Python 3.12
+- 自动生成 `requirements.txt` / `requirements-dev.txt`（pip 兼容）
+- `Makefile` 提供 `make help/sync/dev/test/lint/fmt` 等命令
+- `Dockerfile` 改用 uv 多阶段构建，依赖层缓存更高效
+- `quant_office/cli.py` 提供 `quant-office` 命令行入口
+
 ### 兼容性
-- Python 3.10+
+- Python 3.10+（开发与生产使用 3.12）
 - FastAPI 0.110+
+- uv 0.11+（推荐）/ pip 23+（兼容）
 - 当未安装 `axon_quant` 时自动回退到内存实现，业务零修改
