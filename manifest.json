@@ -1,0 +1,51 @@
+{
+  "name": "quant-office",
+  "version": "0.1.0",
+  "description": "像素风格量化交易指挥中枢：1+5 Agent 协作、策略回测、风控监控与可视化交易执行",
+  "author": "QuantOffice Team",
+  "main": "quant_office.plugin",
+  "entry": "register_plugin",
+  "load_type": "hot",
+  "min_system_version": "2.0.0",
+  "permissions": [
+    "database.read",
+    "database.write",
+    "websocket.broadcast",
+    "event.publish",
+    "event.subscribe"
+  ],
+  "config_schema": {
+    "type": "object",
+    "properties": {
+      "axon_quant_config": {
+        "type": "string",
+        "title": "axon_quant 引擎配置文件路径",
+        "default": "./config/quant.yaml"
+      },
+      "default_exchange": {
+        "type": "string",
+        "title": "默认交易所",
+        "enum": ["binance", "okx", "bybit"],
+        "default": "binance"
+      },
+      "risk_max_drawdown": {
+        "type": "number",
+        "title": "最大回撤阈值 (%)",
+        "default": 5.0,
+        "minimum": 0.1,
+        "maximum": 50.0
+      },
+      "pixel_fps": {
+        "type": "integer",
+        "title": "像素办公室渲染帧率",
+        "default": 30,
+        "minimum": 15,
+        "maximum": 60
+      }
+    }
+  },
+  "frontend_entry": "/index.js",
+  "dependencies": [],
+  "category": "quantitative-trading",
+  "tags": ["quant", "ai-agent", "pixel-style", "axon-quant"]
+}

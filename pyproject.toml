@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quant-office"
+version = "0.1.0"
+description = "QuantOffice — 像素风格量化交易指挥中枢 (AI-Native Pixel-style Quantitative Trading Command Center)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "QuantOffice Team" }]
+keywords = ["quantitative-trading", "multi-agent", "pixel-style", "fastapi", "godot", "axon-quant"]
+
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "websockets>=12.0",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "sqlalchemy>=2.0",
+    "aiosqlite>=0.20",
+    "pyarrow>=15.0",
+    "httpx>=0.27",
+    "python-multipart>=0.0.9",
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=4.1",
+    "ruff>=0.4",
+]
+axon = [
+    "axon_quant==0.3.0",
+]
+rl = [
+    "stable-baselines3>=2.3",
+    "gymnasium>=0.29",
+    "torch>=2.2",
+]
+
+[project.scripts]
+quant-office = "run:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["quant_office*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

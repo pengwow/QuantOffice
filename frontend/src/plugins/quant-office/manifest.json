@@ -1,0 +1,7 @@
+{
+  "name": "quant-office",
+  "version": "0.1.0",
+  "entry": "index.tsx",
+  "pluginName": "quant-office",
+  "permissions": ["websocket.subscribe", "menu.register", "route.register"]
+}

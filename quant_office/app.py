@@ -1,0 +1,145 @@
+"""独立运行模式 — 完整 FastAPI 应用工厂。
+
+两种模式共享 100% 业务代码（``core/``、``agents/``、``api/``、``data/``、``services/``），
+本文件仅负责：
+- CORS / 中间件
+- 数据库初始化
+- 路由前缀（``/api``）
+- WebSocket 端点（``/ws``）
+- 静态资源（Godot WASM + 前端构建产物）
+"""
+from __future__ import annotations
+
+import os
+from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+from typing import AsyncIterator
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+
+from . import __version__
+from .api import agents, backtests, dashboard, reports, risk, strategies, trades
+from .config import settings
+from .core.agent_scheduler import get_agent_scheduler
+from .core.engine_adapter import get_engine_adapter
+from .core.websocket_manager import get_websocket_manager
+from .data.database import init_database
+from .logging_config import get_logger, setup_logging
+
+setup_logging(level=settings.log_level)
+logger = get_logger("app")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """启动 / 关闭钩子。"""
+    settings.resolved_data_dir.mkdir(parents=True, exist_ok=True)
+    init_database()
+    scheduler = get_agent_scheduler()
+    await scheduler.start_all()
+    logger.info("QuantOffice 启动完成，模式=standalone 版本=%s", __version__)
+    try:
+        yield
+    finally:
+        await scheduler.stop_all()
+        logger.info("QuantOffice 已关闭")
+
+
+def create_app() -> FastAPI:
+    settings.mode = "standalone"
+    app = FastAPI(
+        title="QuantOffice",
+        description="像素风格量化交易指挥中枢",
+        version=__version__,
+        lifespan=lifespan,
+    )
+
+    # ---- CORS ----
+    origins = [o.strip() for o in settings.cors_allow_origins.split(",") if o.strip()] or ["*"]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # ---- 全局对象挂载 ----
+    app.state.settings = settings
+    app.state.ws_manager = get_websocket_manager()
+    app.state.engine = get_engine_adapter()
+
+    # ---- API 路由 ----
+    api_prefix = "/api"
+    app.include_router(agents.router, prefix=api_prefix)
+    app.include_router(strategies.router, prefix=api_prefix)
+    app.include_router(backtests.router, prefix=api_prefix)
+    app.include_router(trades.router, prefix=api_prefix)
+    app.include_router(risk.router, prefix=api_prefix)
+    app.include_router(reports.router, prefix=api_prefix)
+    app.include_router(dashboard.router, prefix=api_prefix)
+
+    # ---- WebSocket ----
+    @app.websocket("/ws")
+    async def ws_endpoint(ws):  # noqa: ANN001
+        await app.state.ws_manager.handle_ws(ws)
+
+    # ---- 系统路由 ----
+    @app.get("/api/")
+    async def root() -> dict:
+        return {
+            "name": "QuantOffice",
+            "version": __version__,
+            "mode": "standalone",
+            "agents": ["chief", "data", "strategy", "risk", "execution", "report"],
+            "docs": "/docs",
+            "websocket": "/ws",
+        }
+
+    @app.get("/api/health")
+    async def health() -> dict:
+        return {
+            "status": "ok",
+            "version": __version__,
+            "mode": "standalone",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+    @app.get("/api/info")
+    async def info() -> dict:
+        engine = app.state.engine
+        return {
+            "name": "QuantOffice",
+            "version": __version__,
+            "mode": "standalone",
+            "axon_quant_enabled": engine.using_axon,
+            "agents": ["chief", "data", "strategy", "risk", "execution", "report"],
+            "config": {
+                "pixel_fps": settings.pixel_fps,
+                "default_exchange": settings.default_exchange,
+                "risk_max_drawdown": settings.risk_max_drawdown,
+            },
+        }
+
+    # ---- 静态资源（Godot WASM + 前端构建产物） ----
+    static_dir = settings.resolved_static_dir
+    if static_dir.exists():
+        app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
+    else:
+        @app.get("/")
+        async def index() -> JSONResponse:
+            return JSONResponse(
+                {
+                    "name": "QuantOffice",
+                    "version": __version__,
+                    "ui_hint": "前端尚未构建（quant_office/static/ 不存在），请访问 /docs 查看 API",
+                }
+            )
+
+    return app
+
+
+app = create_app()

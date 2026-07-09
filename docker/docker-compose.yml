@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  quant-office:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: quant-office
+    ports:
+      - "8000:8000"
+    environment:
+      - QUANT_OFFICE_LOG_LEVEL=INFO
+      - QUANT_OFFICE_AXON_ENABLED=false
+      - QUANT_OFFICE_REDIS_ENABLED=false
+    volumes:
+      - qo-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  qo-data:
