@@ -11,7 +11,6 @@ import { useUiStore } from '@/stores/uiStore';
 import styles from './TopNav.module.css';
 
 const TABS = [
-  { to: '/',            label: '办公室', icon: '🏢' },
   { to: '/dashboard',   label: '总览',   icon: '📊' },
   { to: '/agents',      label: 'Agent', icon: '🤖' },
   { to: '/strategies',  label: '策略',   icon: '📈' },
@@ -41,7 +40,6 @@ export function TopNav() {
           <NavLink
             key={t.to}
             to={t.to}
-            end={t.to === '/'}
             className={({ isActive }) => `${styles.tab} ${isActive ? styles.active : ''}`}
           >
             <span className={styles.tabIcon}>{t.icon}</span>

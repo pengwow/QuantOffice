@@ -20,7 +20,6 @@ import { RightPanel } from '@/components/Layout/RightPanel';
 import { useAgentStore } from '@/stores/agentStore';
 import { useUiStore } from '@/stores/uiStore';
 import { wsBus } from '@/api/ws';
-import { PixelOfficePage } from '@/pages/PixelOfficePage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { AgentsPage } from '@/pages/AgentsPage';
 import { StrategiesPage } from '@/pages/StrategiesPage';
@@ -50,7 +49,7 @@ function Shell() {
         <div className="flex flex-1" style={{ minHeight: 0 }}>
           <div className="flex-1" style={{ overflow: 'auto', minWidth: 0 }}>
             <Routes>
-              <Route path="/" element={<PixelOfficePage />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/agents" element={<AgentsPage />} />
               <Route path="/strategies" element={<StrategiesPage />} />
@@ -60,7 +59,7 @@ function Shell() {
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/chat" element={<ChatPage />} />
               <Route path="/settings" element={<SettingsPage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </div>
           <RightPanel />

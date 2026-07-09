@@ -22,7 +22,6 @@ const BacktestsPage  = lazy(() => import('@/pages/BacktestsPage').then((m) => ({
 const TradesPage     = lazy(() => import('@/pages/TradesPage').then((m) => ({ default: m.TradesPage })));
 const RiskPage       = lazy(() => import('@/pages/RiskPage').then((m) => ({ default: m.RiskPage })));
 const ReportsPage    = lazy(() => import('@/pages/ReportsPage').then((m) => ({ default: m.ReportsPage })));
-const PixelOfficePage = lazy(() => import('@/pages/PixelOfficePage').then((m) => ({ default: m.PixelOfficePage })));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 2_000, refetchOnWindowFocus: false } },
@@ -36,7 +35,7 @@ function PluginShell() {
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={<div style={{ padding: 16 }}>加载中…</div>}>
         <Routes>
-          <Route index element={<PixelOfficePage />} />
+          <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="agents" element={<AgentsPage />} />
           <Route path="strategies" element={<StrategiesPage />} />
@@ -44,7 +43,7 @@ function PluginShell() {
           <Route path="trades" element={<TradesPage />} />
           <Route path="risk" element={<RiskPage />} />
           <Route path="reports" element={<ReportsPage />} />
-          <Route path="*" element={<Navigate to="." replace />} />
+          <Route path="*" element={<Navigate to="dashboard" replace />} />
         </Routes>
       </Suspense>
     </QueryClientProvider>
