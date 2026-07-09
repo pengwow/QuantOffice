@@ -22,15 +22,17 @@
 ### 依赖管理（uv）
 - 使用 [uv](https://github.com/astral-sh/uv) 作为推荐依赖管理工具
 - `pyproject.toml` 添加 `[tool.uv]` 与 `[dependency-groups]` 配置
-- 生成 `uv.lock`（51 个包已锁定）
-- `.python-version` 锁定 Python 3.12
-- 自动生成 `requirements.txt` / `requirements-dev.txt`（pip 兼容）
+- **Python 版本要求提升至 3.14+**（`.python-version` 锁定 + `requires-python = ">=3.14"`）
+- 生成 `uv.lock`（77 个包已锁定，含 axon_quant / torch / stable-baselines3 等可选扩展）
+- 重新启用 `axon` / `rl` 可选 extras（axon_quant 0.3.0 仅支持 Python 3.14+）
+- `.python-version` 锁定 Python 3.14
+- 自动生成 `requirements.txt` / `requirements-dev.txt` / `requirements-all.txt`
 - `Makefile` 提供 `make help/sync/dev/test/lint/fmt` 等命令
-- `Dockerfile` 改用 uv 多阶段构建，依赖层缓存更高效
+- `Dockerfile` 改用 `python:3.14-slim` + uv 多阶段构建
 - `quant_office/cli.py` 提供 `quant-office` 命令行入口
 
 ### 兼容性
-- Python 3.10+（开发与生产使用 3.12）
+- **Python 3.14+**（强制要求，因 axon_quant 引擎依赖）
 - FastAPI 0.110+
 - uv 0.11+（推荐）/ pip 23+（兼容）
 - 当未安装 `axon_quant` 时自动回退到内存实现，业务零修改

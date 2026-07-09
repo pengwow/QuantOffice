@@ -7,7 +7,7 @@ name = "quant-office"
 version = "0.1.0"
 description = "QuantOffice — 像素风格量化交易指挥中枢 (AI-Native Pixel-style Quantitative Trading Command Center)"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.14"
 license = { text = "MIT" }
 authors = [{ name = "QuantOffice Team" }]
 keywords = ["quantitative-trading", "multi-agent", "pixel-style", "fastapi", "godot", "axon-quant"]
@@ -30,12 +30,17 @@ dependencies = [
 
 [project.optional-dependencies]
 # 可选：axon_quant 真实引擎（需 Python 3.14+）
-# 注意：axon_quant 0.3.0 要求 Python 3.14+，与本项目默认 Python 3.10+ 互斥
-# 用法：先安装 Python 3.14，再 `uv sync --extra axon`
-# axon = ["axon_quant==0.3.0"]
+# 用法：uv sync --extra axon
+axon = [
+    "axon_quant==0.3.0",
+]
 # 可选：RL 训练（torch/gymnasium/stable-baselines3）
-# 用法：`uv sync --extra rl`
-# rl = ["stable-baselines3>=2.3", "gymnasium>=0.29", "torch>=2.2"]
+# 用法：uv sync --extra rl
+rl = [
+    "stable-baselines3>=2.3",
+    "gymnasium>=0.29",
+    "torch>=2.2",
+]
 
 [project.scripts]
 quant-office = "quant_office.cli:main"
