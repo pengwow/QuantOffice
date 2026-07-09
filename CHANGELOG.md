@@ -36,3 +36,12 @@
 - FastAPI 0.110+
 - uv 0.11+（推荐）/ pip 23+（兼容）
 - 当未安装 `axon_quant` 时自动回退到内存实现，业务零修改
+
+### 修复
+- **中国大陆网络环境 `uv sync` 失败 (`tls handshake eof`)**
+  - 新增 `uv.toml`，默认指向清华 / 阿里云 / 中科大 PyPI 镜像（主源 + 备用）
+  - `pyproject.toml` build backend 由 `setuptools>=68, wheel` 切换为 `hatchling`，
+    消除 `build-system.requires` 阶段的网络拉取（零 build 依赖）
+  - `[tool.uv]` 仅保留 `default-groups = ["dev"]`，避免与 `uv.toml` 重复告警
+  - 重新生成 `uv.lock` 与 5 份 `requirements*.txt`
+  - README 增加"PyPI 镜像"章节，说明 `UV_INDEX_URL` 环境变量覆盖方式

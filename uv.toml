@@ -1,0 +1,25 @@
+# uv 项目级配置 — 自动启用国内 PyPI 镜像
+#
+# 优先级（从高到低）：
+# 1. 环境变量 UV_INDEX_URL / UV_EXTRA_INDEX_URL
+# 2. 本文件 (uv.toml)
+# 3. CLI 参数 (--index-url)
+# 4. pyproject.toml [tool.uv] 段
+#
+# 如需恢复官方源：export UV_INDEX_URL=https://pypi.org/simple
+
+# 清华源（首选，覆盖 PyPI 官方源）
+index-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+
+# 备用索引（如果清华源缺少某个包，自动回退到以下）
+extra-index-url = [
+    "https://mirrors.aliyun.com/pypi/simple/",
+    "https://pypi.mirrors.ustc.edu.cn/simple/",
+    "https://pypi.org/simple/",
+]
+
+# 强制信任的包名（避免某些 hash 校验问题）
+# allow-direct-references = true
+
+# 离线友好的解析策略
+resolution = "highest"

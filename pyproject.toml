@@ -1,6 +1,7 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
+# 使用 hatchling 作为后端，零 build-system 依赖（避免 setuptools/wheel 的网络拉取）
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "quant-office"
@@ -49,9 +50,11 @@ quant-office = "quant_office.cli:main"
 Homepage = "https://github.com/pengwow/QuantOffice"
 Repository = "https://github.com/pengwow/QuantOffice"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["quant_office*"]
+[tool.hatch.build.targets.wheel]
+packages = ["quant_office"]
+
+[tool.hatch.build.targets.sdist]
+packages = ["quant_office"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -64,6 +67,12 @@ target-version = "py310"
 # ==================== uv 配置 ====================
 [tool.uv]
 # 不再使用 dev-dependencies（已迁移到 [dependency-groups].dev）
+# PyPI 镜像配置已迁移到 uv.toml（项目根目录），避免与 [tool.uv] 重复告警
+# 如需在 CI / 容器中覆盖：export UV_INDEX_URL=https://pypi.org/simple
+
+# 默认同步全部可选依赖组（开发 + axon + rl）
+# 如需精简：uv sync --no-default-groups 或显式 --group dev
+default-groups = ["dev"]
 
 [dependency-groups]
 # 开发依赖（uv sync 自动安装）
