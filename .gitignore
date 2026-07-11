@@ -29,6 +29,10 @@ frontend/bun.lockb
 frontend/.env
 frontend/.env.local
 
+# bun 1.2+ global cache (literal tilde dir under frontend; \ escapes ~ in fnmatch)
+frontend/[\~]/
+frontend/.bun/
+
 # 构建产物（后端静态目录，部署时由 CI 重建）
 quant_office/static/
 
