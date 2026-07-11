@@ -6,7 +6,10 @@ import random
 import time
 from typing import Any, Dict, List, Optional
 
+from ..logging_config import get_logger
 from .base import AgentRole, BaseAgent
+
+logger = get_logger("agents.data")
 
 
 class DataAgent(BaseAgent):
@@ -39,7 +42,124 @@ class DataAgent(BaseAgent):
     # ---- 业务方法 ----
 
     async def _load_data(self, symbol: str, timeframe: str, limit: int) -> Dict[str, Any]:
-        # Fallback：合成 SMA/EMA 友好的随机游走数据
+        # 优先用 axon DataService 拉真 ticks 聚合成 OHLCV bars
+        bars = self._load_axon_bars(symbol, timeframe, limit)
+        source = "axon"
+        if bars is None:
+            bars = self._synth_bars(symbol, timeframe, limit)
+            source = "synthetic"
+        # 简单特征
+        closes = [b["close"] for b in bars]
+        self._enrich(bars, closes)
+        self._cache[f"{symbol}_{timeframe}"] = bars
+        self._last_loaded = time.time()
+        return {
+            "symbol": symbol,
+            "timeframe": timeframe,
+            "bars": len(bars),
+            "source": source,
+            "first": bars[0],
+            "last": bars[-1],
+        }
+
+    # ---- axon 真接 ----
+
+    def _load_axon_bars(self, symbol: str, timeframe: str, limit: int) -> Optional[List[Dict[str, Any]]]:
+        """通过 ``axon_quant.data.DataService + MockSource.with_tick_series`` 拉真 ticks，
+        再在 Python 侧按 timeframe 聚合成 OHLCV bars。失败时返回 None 触发 fallback。"""
+        try:
+            import axon_quant as aq  # type: ignore
+        except Exception:
+            return None
+        try:
+            from datetime import datetime, timezone
+
+            tf_sec = self._timeframe_seconds(timeframe)
+            # 每个 bar 采样 ticks：根据 limit 反算，保证能产足 bars
+            # 上限 total_ticks=200_000；最少 60 ticks/bar 以保证有 OHLCV 变化
+            ticks_per_bar = max(60, min(tf_sec, 200_000 // max(1, limit)))
+            total_ticks = min(limit * ticks_per_bar, 200_000)
+            # MockSource 步长：bar_sec / ticks_per_bar；最少 1ns
+            nanos_per_step = max(1, int(tf_sec * 1_000_000_000 / max(1, ticks_per_bar)))
+
+            base_price = 30_000.0 if "BTC" in symbol else 100.0
+
+            def price_fn(i: int) -> float:
+                # 漂移 + 周期 + 噪声，模拟真实走势
+                drift = math.sin(i / 200.0) * 0.002
+                cycle = math.sin(i * 0.013) * 0.008
+                noise = ((i * 1103515245 + 12345) % 1000) / 1000.0 - 0.5
+                return base_price * (1.0 + drift + cycle + noise * 0.004)
+
+            ds = aq.DataService()
+            src = aq.MockSource.with_tick_series(
+                f"{symbol.lower()}_ticks", total_ticks, nanos_per_step, price_fn
+            )
+            ds.register_source(src)
+            start = datetime.now(timezone.utc)
+            end = datetime.now(timezone.utc)
+            req = aq.DataRequest(symbol, start, end, aq.Frequency.Tick)
+            dataset = ds.load(req)
+            ticks = list(dataset.ticks())
+            if not ticks:
+                return None
+            return self._aggregate_ticks(ticks, tf_sec, ticks_per_bar, limit)
+        except Exception as exc:  # pragma: no cover
+            logger.warning("axon 拉取失败，fallback 合成: %s", exc)
+            return None
+
+    @staticmethod
+    def _aggregate_ticks(
+        ticks: List[Any], tf_sec: int, ticks_per_bar: int, limit: int
+    ) -> List[Dict[str, Any]]:
+        """ticks → OHLCV bars（按 tick 序号等距分桶）。"""
+        bars: List[Dict[str, Any]] = []
+        cur: Optional[Dict[str, Any]] = None
+        for i, t in enumerate(ticks):
+            bar_idx = i // ticks_per_bar
+            if bar_idx >= limit:
+                break
+            price = float(t.price)
+            qty = float(t.qty)
+            if cur is None or cur["_bar_idx"] != bar_idx:
+                if cur is not None:
+                    bars.append(cur)
+                cur = {
+                    "_bar_idx": bar_idx,
+                    "open": price,
+                    "high": price,
+                    "low": price,
+                    "close": price,
+                    "volume": qty,
+                }
+            else:
+                cur["high"] = max(cur["high"], price)
+                cur["low"] = min(cur["low"], price)
+                cur["close"] = price
+                cur["volume"] += qty
+        if cur is not None:
+            bars.append(cur)
+
+        now = int(time.time())
+        out: List[Dict[str, Any]] = []
+        for i, b in enumerate(bars):
+            ts = now - (len(bars) - i) * tf_sec
+            out.append(
+                {
+                    "ts": ts,
+                    "open": b["open"],
+                    "high": b["high"],
+                    "low": b["low"],
+                    "close": b["close"],
+                    "volume": b["volume"],
+                }
+            )
+        return out
+
+    # ---- fallback 合成 ----
+
+    def _synth_bars(self, symbol: str, timeframe: str, limit: int) -> List[Dict[str, Any]]:
+        """未装 axon 时合成 SMA/EMA 友好的随机游走数据。"""
         random.seed(hash(symbol) & 0xFFFF)
         base_price = 30_000.0 if "BTC" in symbol else 100.0
         now = int(time.time())
@@ -69,11 +189,7 @@ class DataAgent(BaseAgent):
                 }
             )
             price = c
-        # 简单特征
-        self._enrich(bars, closes)
-        self._cache[f"{symbol}_{timeframe}"] = bars
-        self._last_loaded = time.time()
-        return {"symbol": symbol, "timeframe": timeframe, "bars": len(bars), "first": bars[0], "last": bars[-1]}
+        return bars
 
     def _query_market(self, symbol: str) -> Dict[str, Any]:
         from ..core.engine_adapter import get_engine_adapter
