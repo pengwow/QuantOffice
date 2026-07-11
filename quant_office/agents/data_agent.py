@@ -42,9 +42,12 @@ class DataAgent(BaseAgent):
     # ---- 业务方法 ----
 
     async def _load_data(self, symbol: str, timeframe: str, limit: int) -> Dict[str, Any]:
-        # 优先用 axon DataService 拉真 ticks 聚合成 OHLCV bars
-        bars = self._load_axon_bars(symbol, timeframe, limit)
-        source = "axon"
+        # 三层降级：exchange (Binance/OKX 实时 K 线) → axon (本地 ticks 合成) → 纯合成
+        bars = self._load_exchange_bars(symbol, timeframe, limit)
+        source = "exchange"
+        if bars is None:
+            bars = self._load_axon_bars(symbol, timeframe, limit)
+            source = "axon"
         if bars is None:
             bars = self._synth_bars(symbol, timeframe, limit)
             source = "synthetic"
@@ -61,6 +64,47 @@ class DataAgent(BaseAgent):
             "first": bars[0],
             "last": bars[-1],
         }
+
+    # ---- 真实交易所 ----
+
+    # timeframe -> Binance interval 映射
+    _TIMEFRAME_INTERVAL_MAP: Dict[str, str] = {
+        "1m": "1m", "3m": "3m", "5m": "5m", "15m": "15m", "30m": "30m",
+        "1h": "1h", "2h": "2h", "4h": "4h", "6h": "6h", "8h": "8h", "12h": "12h",
+        "1d": "1d", "3d": "3d", "1w": "1w", "1M": "1M",
+    }
+
+    @classmethod
+    def _timeframe_to_interval(cls, timeframe: str) -> Optional[str]:
+        return cls._TIMEFRAME_INTERVAL_MAP.get(timeframe.lower())
+
+    def _load_exchange_bars(
+        self, symbol: str, timeframe: str, limit: int
+    ) -> Optional[List[Dict[str, Any]]]:
+        """通过 ``ExchangeClient.get_klines`` 拉交易所真实 K 线（无 key 也可走公共行情）。
+
+        失败/未联网/不支持的 timeframe 时返回 None 触发 axon fallback。
+        """
+        interval = self._timeframe_to_interval(timeframe)
+        if interval is None:
+            return None
+        try:
+            from ..core.exchange_client import ExchangeError, get_exchange_client
+        except Exception:
+            return None
+        try:
+            client = get_exchange_client()
+            raw = client.get_klines(symbol, interval=interval, limit=min(limit, 1000))
+        except ExchangeError as exc:
+            logger.warning("exchange 拉取失败，fallback axon: %s", exc)
+            return None
+        except Exception as exc:  # pragma: no cover
+            logger.warning("exchange 拉取异常，fallback axon: %s", exc)
+            return None
+        if not raw:
+            return None
+        # Binance kline 行已转 dict；按时间升序
+        return sorted(raw, key=lambda r: int(r.get("ts", 0)))
 
     # ---- axon 真接 ----
 
