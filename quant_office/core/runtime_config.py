@@ -57,6 +57,10 @@ class RiskConfig(BaseModel):
     warning_drawdown: float = 0.03
     max_position_ratio: float = 1.0
     circuit_breaker_threshold: int = 5
+    # 95% VaR 占组合价值比例（被 RiskAgent._metrics 用）
+    var_pct_limit: float = 0.02
+    # RiskAgent 内存中保留的最近告警条数（超过则滚动丢弃）
+    alert_history_size: int = 100
 
 
 class RuntimeConfig(BaseModel):

@@ -1,4 +1,8 @@
-"""RiskAgent — 12ns 预交易风控 + 实时组合风险监控。"""
+"""RiskAgent — 12ns 预交易风控 + 实时组合风险监控。
+
+阈值（VaR 上限、告警历史长度）从 ``RuntimeConfigStore.risk`` 热读取；
+UI 改完立即生效，无需重启 Agent。
+"""
 from __future__ import annotations
 
 import math
@@ -6,6 +10,12 @@ import time
 from typing import Any, Dict, List
 
 from .base import AgentRole, BaseAgent
+
+
+def _active_risk_cfg() -> Any:
+    """每次调用重读最新阈值，保证 UI 热更新（lazy import 避开循环）。"""
+    from ..core.runtime_config import get_runtime_config
+    return get_runtime_config().get_risk()
 
 
 class RiskAgent(BaseAgent):
@@ -54,6 +64,7 @@ class RiskAgent(BaseAgent):
         result = engine.pre_trade_check(req, portfolio)
         out = result.to_dict()
         if not result.passed:
+            cfg = _active_risk_cfg()
             alert = {
                 "level": "CRITICAL" if result.severity == "critical" else "WARNING",
                 "type": result.failed_check,
@@ -61,24 +72,27 @@ class RiskAgent(BaseAgent):
                 "ts": time.time(),
             }
             self._alerts.append(alert)
-            if len(self._alerts) > 100:
-                self._alerts = self._alerts[-100:]
+            # 滚动丢弃：保留最近 N 条（N 从配置读）
+            if len(self._alerts) > cfg.alert_history_size:
+                self._alerts = self._alerts[-cfg.alert_history_size:]
             # 触发熔断
             if result.severity == "critical":
                 self._circuit_tripped = True
         return out
 
     def _metrics(self) -> Dict[str, Any]:
+        cfg = _active_risk_cfg()
         positions = self._portfolio_snapshot.get("positions", {})
         total = self._portfolio_snapshot.get("cash", 0.0)
         for symbol, qty in positions.items():
             total += qty * self._mark_price(symbol)
-        # 简化 VaR: 95% 置信度，假设收益正态
-        var_95 = max(0.0, total * 0.02)
+        # VaR 95%：占组合价值比例从 RiskConfig 读（默认 0.02）
+        var_95 = max(0.0, total * cfg.var_pct_limit)
         return {
             "portfolio_value": total,
             "positions": positions,
             "var_95": var_95,
+            "var_pct_limit": cfg.var_pct_limit,
             "circuit_tripped": self._circuit_tripped,
             "alerts_count": len(self._alerts),
             "ts": time.time(),
