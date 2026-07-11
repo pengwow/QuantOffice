@@ -199,6 +199,37 @@ async def test_exchange() -> Dict[str, Any]:
 
 
 # ============================================================
+# Engine Adapter (axon_quant)
+# ============================================================
+@router.get("/engine", response_model=Dict[str, Any])
+async def engine_status() -> Dict[str, Any]:
+    """当前 ``AxonQuantAdapter`` 状态：axon / exchange / 降级路径。"""
+    from ..core.engine_adapter import AXON_AVAILABLE, get_engine_adapter
+
+    adapter = get_engine_adapter()
+    return {
+        "axon_available": AXON_AVAILABLE,
+        "using_axon": adapter.using_axon,
+        "using_exchange": adapter.using_exchange,
+        "exchange_venue": adapter.exchange_venue,
+        "exchange_testnet": adapter.exchange_testnet,
+    }
+
+
+@router.post("/engine/exchange/test", response_model=Dict[str, Any])
+async def engine_exchange_test() -> Dict[str, Any]:
+    """真实交易所 OMS 联通测试(走 ``axon_quant.BinanceAdapter``)。
+
+    若未配置 ``BINANCE_API_KEY``,返回 ``ok=False`` 提示。
+    """
+    from ..core.engine_adapter import get_engine_adapter
+
+    result = get_engine_adapter().test_exchange_connection()
+    logger.info("Engine exchange 联通测试: %s", result)
+    return result
+
+
+# ============================================================
 # Risk
 # ============================================================
 @router.get("/risk", response_model=Dict[str, Any])
