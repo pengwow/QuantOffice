@@ -14,6 +14,34 @@ QuantOffice 基于 FastAPI 后端 + **前端 SPA**（React + TypeScript + Vite +
 - **🔌 双模式运行**：独立部署 (`python run.py`) 或 QuantCell 插件加载
 - **🔁 零拷贝数据流**：Arrow `RecordBatch` 在所有 Agent 间透传
 - **📦 极轻前端**：bun 包管理 + Vite 构建，首屏 gzip < 100KB（不含 echarts）
+- **🦀 真接 axon_quant 引擎**：K 线 / 撮合 / 风控 / RL 训练 / 真实下单全部直连 Rust 内核（[改造演化](#axon_quant-真接改造-p0-p7)）
+
+## axon_quant 真接改造 (P0-P7)
+
+QuantOffice 已完成从"内存 fallback"到"真接 `axon_quant 0.3.0` Rust 内核"的端到端改造,所有关键路径均直连 Rust + PyO3 引擎:
+
+| 阶段 | 主题 | 关键改动 | 真实接入点 |
+|------|------|---------|-----------|
+| **P0** | 引擎 + 风控 | `AxonQuantAdapter` / `RiskMonitor` 周期扫描 | `axon_quant.core.BacktestEngine` + `RiskLimits` |
+| **P1** | Data + Risk | DataAgent 真拉 ticks / RiskAgent 读 RuntimeConfigStore | `aq.DataService` + `aq.MockSource.with_tick_series` |
+| **P2** | 解耦 + 清理 | Agent 私有属性 → `get_portfolio_snapshot` 公开 API | 移除 fallback "立即成交" 死代码 |
+| **P3** | K 线三层降级 | exchange (Binance/OKX) → axon → 纯合成 | `ExchangeClient.get_klines` 公共行情 |
+| **P4** | RL 训练 | StrategyAgent 真接 `TradingEnv`,heuristic / PPO 双 backend | `aq.rl.TradingEnv` (action=list[float]) |
+| **P5** | 真下单 | ExecutionAgent 真接 `BinanceAdapter`,order_id `AQ-*` 引擎签发 | `aq.BinanceAdapter` + `aq.binance_testnet_config` |
+| **P6** | 前端联调 | bun 1.2+ cache 走 `[\~]/` escape,build 跑通 | Vite 5.4.21 / bun 1.2.14 |
+| **P7** | E2E 联调 | 9 步全链路探针 + JSON 报告 | `scripts/e2e_smoke.py` + `reports/e2e_*.json` |
+
+**首次跑通示例** ([reports/e2e_20260711T095549Z.json](reports/e2e_20260711T095549Z.json)):
+
+```
+9/9 步 ✅ 共 4.9s
+├─ engine:      axon_quant 0.3.0 loaded, exchange OMS 未配置
+├─ data:        source=exchange (Binance 公共 K 线) 120 bars
+├─ rl_train:    backend=heuristic, 4 episodes, 92 笔模拟成交
+├─ risk:        dry-run 命中 4 条 (3 critical + 1 warning)
+├─ trade:       0.01 BTC @ 67000.05 filled (order_id AQ-00000001-...)
+└─ dashboard:   6 策略 / 31 笔 / 61.29% 胜率 / $867 pnl
+```
 
 ## 架构总览
 
@@ -87,28 +115,35 @@ uv sync
 # 1) 后端（Python 3.14+ / FastAPI）
 curl -LsSf https://astral.sh/uv/install.sh | sh
 uv python install 3.14
-uv sync --group dev                # 安装后端 + 开发依赖
-uv run python run.py --reload      # 启动后端 :8000
+uv sync --extra axon --extra rl --group dev   # 装后端 + axon_quant 引擎 + RL 栈
+uv run python run.py --reload                 # 启动后端 :8000
 
 # 2) 前端（React 18 + Vite + bun）
 curl -fsSL https://bun.sh/install | bash
-cd frontend && bun install         # 安装前端依赖
-bun run dev                        # 启动 Vite :5173（自动代理 :8000）
+cd frontend && bun install                     # 安装前端依赖
+bun run dev                                    # 启动 Vite :5173（自动代理 :8000）
+
+# 3) 一键 E2E 验证（另起一个终端，需先起后端）
+uv run python scripts/e2e_smoke.py --base http://127.0.0.1:8000
+# → 控制台打印 summary + 落 reports/e2e_<UTC ts>.json
 
 # 打开浏览器
 open http://localhost:5173
 ```
 
+> **P0-P7 改造后必备**:`uv sync --extra axon` 会装上 `axon_quant==0.3.0`,没有它所有"真接"路径都会落回内存 fallback。
+> 想启用 PPO RL backend 还需要 `--extra rl`(装 `stable-baselines3` + `torch`)。
+
 #### 可选扩展包
 
 ```bash
-# 后端：axon_quant 真实引擎（取代内存 fallback）
+# 后端:axon_quant 真实引擎(取代内存 fallback)
 uv sync --extra axon
 
-# 后端：RL 训练栈（torch / gymnasium / stable-baselines3）
+# 后端:RL 训练栈(torch / gymnasium / stable-baselines3)
 uv sync --extra rl
 
-# 前端：生产构建（输出 frontend/dist/）
+# 前端:生产构建(输出 frontend/dist/)
 cd frontend && bun run build
 ```
 
@@ -271,6 +306,10 @@ QuantOffice/
 │       ├── types/                 # 全局 TS 类型
 │       └── plugins/quant-office/  # QuantCell 插件入口
 ├── tests/                         # 后端测试
+├── scripts/                       # 运维 / E2E 脚本
+│   └── e2e_smoke.py               # P7 全链路探针(9 步)
+├── reports/                       # E2E / 回测运行报告(JSON)
+│   └── e2e_*.json                 # 每次跑 e2e_smoke 的原始记录
 ├── docker/                        # 容器化部署
 └── docs/                          # 项目文档
 ```
@@ -286,6 +325,43 @@ QuantOffice/
 | 数据目录 | `./data/` | `backend/plugins/quant-office/data/` |
 
 业务代码（`core/`、`agents/`、`api/`、`data/`、`services/`）**100% 复用**，仅入口与路由前缀不同。
+
+## E2E 联调测试
+
+`scripts/e2e_smoke.py` 是 P7 引入的全链路探针,9 步走完 "K 线 → 策略 → RL 训练 → 风控 → 真下单 → 仪表盘" 的完整闭环。
+
+```bash
+# 1. 起后端（任一终端）
+uv run python run.py --port 8000
+
+# 2. 跑 E2E（另起终端）
+uv run python scripts/e2e_smoke.py --base http://127.0.0.1:8000
+
+# 可调参数
+uv run python scripts/e2e_smoke.py \
+    --base http://127.0.0.1:8000 \
+    --symbol BTCUSDT --timeframe 1h --limit 120 --episodes 4
+```
+
+**链路覆盖**:
+
+| # | 端点 | 验证点 |
+|---|------|--------|
+| 1 | `GET /api/health` | 探活 + 启动时间 |
+| 2 | `GET /api/settings/engine` | `axon_quant` 加载状态 / `using_exchange` 标志 |
+| 3 | `POST /api/agents/data/command{load_data}` | DataAgent 三层降级(exchange→axon→synth),确认 `source` 字段 |
+| 4 | `POST /api/strategies` | 建新策略,回 `201` + `id` |
+| 5 | `POST /api/strategies/{id}/train` | StrategyAgent 真接 `aq.rl.TradingEnv`,回 `backend` + `sharpe` + `final_portfolio` |
+| 6 | `GET /api/risk/metrics` | 全量告警聚合 |
+| 7 | `POST /api/risk/check-dry-run` | 风控预演(不写库),命中规则明细 |
+| 8 | `POST /api/trades` | ExecutionAgent 走三层 OMS(exchange→axon→fallback),`order_id` 形如 `AQ-*` |
+| 9 | `GET /api/dashboard` | 聚合策略 / 成交 / 告警 / 权益曲线 |
+
+**报告样例**:
+- `reports/e2e_<UTC ts>.json` — 完整 9 步 raw 响应(每步含 `status` / `elapsed_ms` / `body`)
+- 控制台末尾打印 `summary` 字段:`{ok, failed, engine, data, rl_train, risk, trade, dashboard}`
+
+**判定标准**: `summary.failed == 0` 即视为全链路通过。任意一步 `error` 会写进对应 step 的 `error` 字段,但脚本不会中断,便于一次性看完所有问题。
 
 ## 开发与测试
 
@@ -303,8 +379,10 @@ python run.py --reload
 
 ## 参考
 
-- [axon_quant](https://github.com/pengwow/axon_quant) — AI-Native 量化交易框架（Rust 核心）
+- [axon_quant](https://github.com/pengwow/axon_quant) — AI-Native 量化交易框架（Rust + PyO3,当前 `0.3.0`）
 - [QuantCell](https://github.com/) — 插件化部署平台
+- [scripts/e2e_smoke.py](scripts/e2e_smoke.py) — P7 全链路 E2E 探针
+- [reports/](reports/) — E2E 运行报告归档
 
 ## 许可证
 
