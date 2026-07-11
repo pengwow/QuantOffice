@@ -85,6 +85,49 @@ async def update_strategy(strategy_id: str, body: dict) -> dict:
         return strategy_to_response(s)
 
 
+@router.post("/{strategy_id}/train")
+async def train_strategy(strategy_id: str, body: dict | None = None) -> dict:
+    """触发 StrategyAgent 的 RL 训练(真接 axon_quant.rl.TradingEnv)。
+
+    请求体字段(可选):symbol, timeframe, episodes, limit, ppo(默认 false)
+    返回:backend, episodes, avg_reward, avg_return, sharpe, win_rate, final_portfolio...
+    """
+    from ..core.agent_scheduler import get_agent_scheduler
+
+    body = body or {}
+    factory = get_session_factory()
+    async with factory() as session:
+        s = await session.get(Strategy, strategy_id)
+        if s is None:
+            raise HTTPException(404, f"Strategy not found: {strategy_id}")
+        # 用 Strategy 表的 symbol/params 作为默认
+        try:
+            params = json.loads(s.params) if s.params else {}
+        except Exception:
+            params = {}
+        symbol = body.get("symbol", s.symbol or params.get("symbol", "BTCUSDT"))
+        timeframe = body.get("timeframe", params.get("timeframe", "1h"))
+        strategy = body.get("strategy", s.name or strategy_id)
+
+    agent = get_agent_scheduler().get("strategy")
+    if agent is None:
+        raise HTTPException(503, "StrategyAgent 未启动")
+
+    payload = {
+        "symbol": symbol,
+        "timeframe": timeframe,
+        "strategy": strategy,
+        "episodes": int(body.get("episodes", 5)),
+        "limit": int(body.get("limit", 100)),
+        "ppo": bool(body.get("ppo", False)),
+    }
+    resp = await agent.handle("train_rl", payload)
+    if "error" in resp:
+        raise HTTPException(400, resp["error"])
+    resp["strategy_id"] = strategy_id
+    return resp
+
+
 @router.delete("/{strategy_id}", status_code=204)
 async def delete_strategy(strategy_id: str):
     factory = get_session_factory()

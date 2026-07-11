@@ -1,6 +1,8 @@
 """StrategyAgent — 策略开发 / 回测 / RL 训练。"""
 from __future__ import annotations
 
+import math
+import time
 from typing import Any, Dict, List, Optional
 
 from .base import AgentRole, BaseAgent
@@ -39,6 +41,8 @@ class StrategyAgent(BaseAgent):
             return await self._run_backtest(payload)
         if command == "analyze_strategy":
             return await self._analyze_strategy(payload)
+        if command == "train_rl":
+            return await self._train_rl(payload)
         raise ValueError(f"StrategyAgent 不支持命令: {command}")
 
     # ---- 业务方法 ----
@@ -192,6 +196,224 @@ class StrategyAgent(BaseAgent):
             return get_agent_scheduler().get("data")
         except Exception:
             return None
+
+    # ---- RL 训练（真接 axon_quant.rl.TradingEnv） ----
+
+    async def _train_rl(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """用 ``axon_quant.rl.TradingEnv`` 做单进程训练。
+
+        策略:简单 SMA 交叉 heuristic(返回 list[float] in [-1, 1])。
+        若装了 ``stable-baselines3``,自动切到 PPO。
+        """
+        from ..logging_config import get_logger
+        log = get_logger("agents.strategy")
+
+        symbol = payload.get("symbol", "BTCUSDT")
+        timeframe = payload.get("timeframe", "1h")
+        strategy_name = payload.get("strategy", "momentum")
+        episodes = max(1, int(payload.get("episodes", 5)))
+        limit = max(20, int(payload.get("limit", 100)))
+
+        # 1. 拉数据
+        data_agent = self._peer_data_agent()
+        bars: Optional[List[Dict[str, Any]]] = None
+        if data_agent is not None:
+            await data_agent.handle(
+                "load_data", {"symbol": symbol, "timeframe": timeframe, "limit": limit}
+            )
+            cache_key = f"{symbol}_{timeframe}"
+            bars = data_agent._cache.get(cache_key)
+
+        if not bars:
+            return {"error": f"无 {symbol} {timeframe} 数据"}
+
+        # 2. 转 market_data 格式（TradingEnv 要求 list[dict] + timestamp 字段）
+        market_data: List[Dict[str, Any]] = []
+        for b in bars[-limit:]:
+            market_data.append(
+                {
+                    "timestamp": int(b.get("ts", 0)),
+                    "open": float(b.get("open", 0.0)),
+                    "high": float(b.get("high", 0.0)),
+                    "low": float(b.get("low", 0.0)),
+                    "close": float(b.get("close", 0.0)),
+                    "volume": float(b.get("volume", 0.0)),
+                }
+            )
+
+        # 3. 选 backend：stable-baselines3 PPO > axon TradingEnv + heuristic
+        use_ppo = bool(payload.get("ppo", False))
+        sb3_available = False
+        if use_ppo:
+            try:
+                import stable_baselines3  # type: ignore  # noqa: F401
+                sb3_available = True
+            except Exception:
+                sb3_available = False
+
+        backend = "ppo" if sb3_available else "heuristic"
+        log.info("RL 训练 backend=%s episodes=%d bars=%d", backend, episodes, len(market_data))
+
+        if sb3_available:
+            return await self._train_ppo(market_data, episodes, strategy_name)
+        return self._train_heuristic(market_data, episodes, strategy_name)
+
+    def _train_heuristic(
+        self,
+        market_data: List[Dict[str, Any]],
+        episodes: int,
+        strategy_name: str,
+    ) -> Dict[str, Any]:
+        """SMA 交叉 heuristic 跑 N 个 episode,收集 metrics。"""
+        try:
+            import axon_quant as aq  # type: ignore
+        except Exception as exc:
+            return {"error": f"axon_quant 未装: {exc}"}
+
+        env = aq.rl.TradingEnv(market_data=market_data)
+        episode_metrics: List[Dict[str, Any]] = []
+        try:
+            for ep in range(episodes):
+                env.reset()
+                ep_reward = 0.0
+                trades = 0
+                portfolio_curve: List[float] = [env.portfolio_value]
+                done = False
+                while not done:
+                    action = self._sma_action(market_data, env.current_step)
+                    try:
+                        _obs, reward, terminated, truncated, info = env.step(action)
+                    except Exception:
+                        break
+                    ep_reward += float(reward)
+                    trades = int(info.get("trades_executed", trades))
+                    portfolio_curve.append(float(info.get("portfolio_value", 0.0)))
+                    done = bool(terminated) or bool(truncated)
+                episode_metrics.append(
+                    {
+                        "episode": ep,
+                        "total_reward": ep_reward,
+                        "final_portfolio": portfolio_curve[-1],
+                        "return": (portfolio_curve[-1] - portfolio_curve[0]) / portfolio_curve[0]
+                        if portfolio_curve[0]
+                        else 0.0,
+                        "trades": trades,
+                    }
+                )
+        finally:
+            try:
+                env.close()
+            except Exception:
+                pass
+
+        return self._summarize_training(episode_metrics, episodes, strategy_name, "heuristic")
+
+    async def _train_ppo(
+        self,
+        market_data: List[Dict[str, Any]],
+        episodes: int,
+        strategy_name: str,
+    ) -> Dict[str, Any]:
+        """stable-baselines3 PPO 训练(可选,需 sb3 依赖)。"""
+        try:
+            import axon_quant as aq  # type: ignore
+            from stable_baselines3 import PPO  # type: ignore
+        except Exception as exc:
+            return {"error": f"PPO 依赖缺失: {exc}"}
+
+        env = aq.rl.TradingEnv(market_data=market_data)
+        try:
+            model = PPO("MlpPolicy", env, verbose=0)
+            model.learn(total_timesteps=episodes * len(market_data))
+            # 评估
+            obs, _ = env.reset()
+            portfolio_curve: List[float] = [env.portfolio_value]
+            ep_reward = 0.0
+            trades = 0
+            done = False
+            while not done:
+                action, _ = model.predict(obs, deterministic=True)
+                try:
+                    obs, reward, terminated, truncated, info = env.step(action)
+                except Exception:
+                    break
+                ep_reward += float(reward)
+                trades = int(info.get("trades_executed", trades))
+                portfolio_curve.append(float(info.get("portfolio_value", 0.0)))
+                done = bool(terminated) or bool(truncated)
+        finally:
+            try:
+                env.close()
+            except Exception:
+                pass
+
+        episode_metrics = [
+            {
+                "episode": 0,
+                "total_reward": ep_reward,
+                "final_portfolio": portfolio_curve[-1] if portfolio_curve else 0.0,
+                "return": (
+                    (portfolio_curve[-1] - portfolio_curve[0]) / portfolio_curve[0]
+                    if portfolio_curve and portfolio_curve[0]
+                    else 0.0
+                ),
+                "trades": trades,
+            }
+        ]
+        return self._summarize_training(episode_metrics, episodes, strategy_name, "ppo")
+
+    @staticmethod
+    def _sma_action(market_data: List[Dict[str, Any]], current_step: int) -> List[float]:
+        """SMA(5) 交叉 heuristic:close > sma5*1.001 买 0.5,close < sma5*0.999 卖 0.5,否则 0。"""
+        if current_step < 5:
+            return [0.0]
+        window = market_data[max(0, current_step - 4) : current_step + 1]
+        closes = [float(b["close"]) for b in window]
+        sma = sum(closes) / len(closes)
+        last = closes[-1]
+        if last > sma * 1.001:
+            return [0.5]
+        if last < sma * 0.999:
+            return [-0.5]
+        return [0.0]
+
+    @staticmethod
+    def _summarize_training(
+        episode_metrics: List[Dict[str, Any]],
+        episodes: int,
+        strategy_name: str,
+        backend: str,
+    ) -> Dict[str, Any]:
+        if not episode_metrics:
+            return {"error": "训练无 episode 数据", "backend": backend}
+        total_rewards = [m["total_reward"] for m in episode_metrics]
+        returns = [m["return"] for m in episode_metrics]
+        final_portfolios = [m["final_portfolio"] for m in episode_metrics]
+        avg_reward = sum(total_rewards) / len(total_rewards)
+        avg_return = sum(returns) / len(returns)
+        sharpe = 0.0
+        if len(returns) > 1:
+            mean = avg_return
+            var = sum((r - mean) ** 2 for r in returns) / (len(returns) - 1)
+            std = math.sqrt(var)
+            # 收益完全相同时(std≈0),sharpe 无意义，记 0
+            if std > 1e-9:
+                sharpe = mean / std
+        return {
+            "backend": backend,
+            "strategy": strategy_name,
+            "episodes": episodes,
+            "avg_reward": avg_reward,
+            "avg_return": avg_return,
+            "sharpe": sharpe,
+            "win_rate": sum(1 for r in returns if r > 0) / len(returns),
+            "final_portfolio": final_portfolios[-1],
+            "best_portfolio": max(final_portfolios),
+            "worst_portfolio": min(final_portfolios),
+            "total_trades": sum(m["trades"] for m in episode_metrics),
+            "episodes_detail": episode_metrics,
+            "ts": time.time(),
+        }
 
     # ---- 心跳 ----
 
