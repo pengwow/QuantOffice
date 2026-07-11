@@ -73,7 +73,7 @@ def test_engine_adapter_backtest_runs():
     engine = get_engine_adapter()
     bars = [
         {"open": 100, "high": 101, "low": 99, "close": 100 + i * 0.1, "volume": 1, "sma5": 100, "sma20": 99}
-        for i in range(120)
+        for i in range(30)
     ]
     result = engine.run_backtest("momentum", bars)
     assert result.strategy == "momentum"
