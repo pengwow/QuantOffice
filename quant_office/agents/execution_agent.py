@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import time
-import uuid
 from typing import Any, Dict, List
 
 from .base import AgentRole, BaseAgent
@@ -40,7 +39,7 @@ class ExecutionAgent(BaseAgent):
                 self._log("warning", f"风控拒绝: {result.get('message')}")
                 return {"status": "rejected", "reason": result.get("message"), "agent": "risk"}
 
-        # 2. 下单
+        # 2. 下单（axon / fallback OMS 都会返回 filled 或 submitted）
         req = OrderRequest(
             symbol=order.get("symbol", "BTCUSDT"),
             side=order.get("side", "buy"),
@@ -48,16 +47,11 @@ class ExecutionAgent(BaseAgent):
             order_type=order.get("order_type", "market"),
             price=order.get("price"),
         )
-        portfolio = self._build_portfolio(risk_agent)
-        result = await get_engine_adapter().submit_order(req, portfolio)
+        result = await get_engine_adapter().submit_order(req, self._build_portfolio(risk_agent))
 
-        # 3. Fallback 模式下模拟立即成交
-        if result.status == "submitted" and not get_engine_adapter().using_axon:
-            price = order.get("price") or get_engine_adapter().current_price(req.symbol)
-            result.status = "filled"
-            result.filled_price = price
-            result.filled_at = time.time()
-            self._apply_fill(req.symbol, req.side, req.quantity, price, risk_agent)
+        # 3. 如果已成交（axon + fallback OMS 都返回 filled），把仓位应用到 RiskAgent
+        if result.status == "filled" and risk_agent is not None and result.filled_price is not None:
+            risk_agent.apply_fill(req.symbol, req.side, req.quantity, result.filled_price)
 
         record = result.to_dict()
         record["ts"] = time.time()
@@ -107,32 +101,9 @@ class ExecutionAgent(BaseAgent):
         from ..core.engine_adapter import Portfolio
         if risk_agent is None:
             return Portfolio()
-        snap = risk_agent._portfolio_snapshot
+        # 走公开 API，不再直读 risk_agent._portfolio_snapshot
+        snap = risk_agent.get_portfolio_snapshot()
         return Portfolio(
             cash=snap.get("cash", 100_000.0),
             positions={k: float(v) for k, v in snap.get("positions", {}).items()},
         )
-
-    def _apply_fill(
-        self,
-        symbol: str,
-        side: str,
-        quantity: float,
-        price: float,
-        risk_agent: Any,
-    ) -> None:
-        if risk_agent is None:
-            return
-        snap = risk_agent._portfolio_snapshot
-        positions = snap.setdefault("positions", {})
-        cash = snap.get("cash", 100_000.0)
-        cost = quantity * price
-        if side == "buy":
-            positions[symbol] = positions.get(symbol, 0.0) + quantity
-            snap["cash"] = cash - cost
-        else:
-            positions[symbol] = positions.get(symbol, 0.0) - quantity
-            snap["cash"] = cash + cost
-        # 清零
-        if abs(positions.get(symbol, 0.0)) < 1e-9:
-            positions.pop(symbol, None)

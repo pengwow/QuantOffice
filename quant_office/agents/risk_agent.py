@@ -34,6 +34,35 @@ class RiskAgent(BaseAgent):
             "pnl": 0.0,
         }
 
+    # ---- 公开 portfolio API（被 ExecutionAgent / StrategyAgent 复用）----
+
+    def get_portfolio_snapshot(self) -> Dict[str, Any]:
+        """返回组合快照的浅拷贝（外部只读）。"""
+        snap = dict(self._portfolio_snapshot)
+        snap["positions"] = dict(self._portfolio_snapshot.get("positions", {}))
+        return snap
+
+    def apply_fill(self, symbol: str, side: str, quantity: float, price: float) -> Dict[str, Any]:
+        """公开 API：把一笔成交应用到 portfolio（替代直改 _portfolio_snapshot）。
+
+        返回更新后的 snapshot，便于调用方同步。
+        """
+        positions = self._portfolio_snapshot.setdefault("positions", {})
+        cash = float(self._portfolio_snapshot.get("cash", 100_000.0))
+        cost = float(quantity) * float(price)
+        side_l = side.lower()
+        if side_l == "buy":
+            positions[symbol] = float(positions.get(symbol, 0.0)) + float(quantity)
+            cash = cash - cost
+        else:
+            positions[symbol] = float(positions.get(symbol, 0.0)) - float(quantity)
+            cash = cash + cost
+        # 接近 0 视为平仓
+        if abs(positions.get(symbol, 0.0)) < 1e-9:
+            positions.pop(symbol, None)
+        self._portfolio_snapshot["cash"] = cash
+        return self.get_portfolio_snapshot()
+
     async def process(self, command: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         if command == "check_risk":
             return await self._check_risk(payload)
