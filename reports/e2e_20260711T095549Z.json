@@ -1,0 +1,843 @@
+{
+  "ts_start": "2026-07-11T09:55:44.434807+00:00",
+  "base": "http://127.0.0.1:8765",
+  "params": {
+    "base": "http://127.0.0.1:8765",
+    "symbol": "BTCUSDT",
+    "timeframe": "1h",
+    "limit": 120,
+    "episodes": 4
+  },
+  "steps": [
+    {
+      "step": "health",
+      "method": "GET",
+      "path": "/api/health",
+      "ts": "2026-07-11T09:55:44.542614+00:00",
+      "status": 200,
+      "elapsed_ms": 3,
+      "body": {
+        "status": "ok",
+        "version": "0.1.0",
+        "mode": "standalone",
+        "timestamp": "2026-07-11T09:55:44.544845+00:00"
+      }
+    },
+    {
+      "step": "engine_status",
+      "method": "GET",
+      "path": "/api/settings/engine",
+      "ts": "2026-07-11T09:55:44.545807+00:00",
+      "status": 200,
+      "elapsed_ms": 1,
+      "body": {
+        "axon_available": true,
+        "using_axon": true,
+        "using_exchange": false,
+        "exchange_venue": null,
+        "exchange_testnet": true
+      }
+    },
+    {
+      "step": "data_load",
+      "method": "POST",
+      "path": "/api/agents/data/command",
+      "ts": "2026-07-11T09:55:44.547813+00:00",
+      "status": 200,
+      "elapsed_ms": 4252,
+      "body": {
+        "ok": true,
+        "result": {
+          "symbol": "BTCUSDT",
+          "timeframe": "1h",
+          "bars": 120,
+          "source": "exchange",
+          "first": {
+            "ts": 1783332000000,
+            "open": 62664.77,
+            "high": 63135.11,
+            "low": 62664.76,
+            "close": 62820.67,
+            "volume": 79.84288
+          },
+          "last": {
+            "ts": 1783760400000,
+            "open": 64263.28,
+            "high": 64300.0,
+            "low": 64159.7,
+            "close": 64179.14,
+            "volume": 21.99009,
+            "sma5": 64191.364,
+            "sma20": 64083.2755
+          }
+        },
+        "agent": "data"
+      }
+    },
+    {
+      "step": "create_strategy",
+      "method": "POST",
+      "path": "/api/strategies",
+      "ts": "2026-07-11T09:55:48.800809+00:00",
+      "status": 201,
+      "elapsed_ms": 12,
+      "body": {
+        "id": "strat-a5474d12",
+        "name": "e2e-strat-1783763748",
+        "symbol": "BTCUSDT",
+        "status": "live",
+        "params": {
+          "timeframe": "1h",
+          "episodes": 4
+        },
+        "pnl": 0.0,
+        "sharpe": 0.0,
+        "drawdown": 0.0,
+        "created_at": "2026-07-11T09:55:48",
+        "updated_at": "2026-07-11T09:55:48"
+      }
+    },
+    {
+      "step": "rl_train",
+      "method": "POST",
+      "path": "/api/strategies/strat-a5474d12/train",
+      "ts": "2026-07-11T09:55:48.813384+00:00",
+      "status": 200,
+      "elapsed_ms": 583,
+      "body": {
+        "ok": true,
+        "result": {
+          "backend": "heuristic",
+          "strategy": "e2e-strat-1783763748",
+          "episodes": 4,
+          "avg_reward": -125.39052805837127,
+          "avg_return": -0.018345174703963858,
+          "sharpe": 0.0,
+          "win_rate": 0.0,
+          "final_portfolio": 98165.48252960361,
+          "best_portfolio": 98165.48252960361,
+          "worst_portfolio": 98165.48252960361,
+          "total_trades": 92,
+          "episodes_detail": [
+            {
+              "episode": 0,
+              "total_reward": -125.39052805837127,
+              "final_portfolio": 98165.48252960361,
+              "return": -0.018345174703963858,
+              "trades": 23
+            },
+            {
+              "episode": 1,
+              "total_reward": -125.39052805837127,
+              "final_portfolio": 98165.48252960361,
+              "return": -0.018345174703963858,
+              "trades": 23
+            },
+            {
+              "episode": 2,
+              "total_reward": -125.39052805837127,
+              "final_portfolio": 98165.48252960361,
+              "return": -0.018345174703963858,
+              "trades": 23
+            },
+            {
+              "episode": 3,
+              "total_reward": -125.39052805837127,
+              "final_portfolio": 98165.48252960361,
+              "return": -0.018345174703963858,
+              "trades": 23
+            }
+          ],
+          "ts": 1783763749.3958554
+        },
+        "agent": "strategy",
+        "strategy_id": "strat-a5474d12"
+      }
+    },
+    {
+      "step": "risk_metrics",
+      "method": "GET",
+      "path": "/api/risk/metrics",
+      "ts": "2026-07-11T09:55:49.396765+00:00",
+      "status": 200,
+      "elapsed_ms": 6,
+      "body": {
+        "total_alerts": 33,
+        "by_level": {
+          "info": 1,
+          "warning": 8,
+          "critical": 24
+        },
+        "unacknowledged": 32,
+        "ts": "now"
+      }
+    },
+    {
+      "step": "risk_dry_run",
+      "method": "POST",
+      "path": "/api/risk/check-dry-run",
+      "ts": "2026-07-11T09:55:49.403533+00:00",
+      "status": 200,
+      "elapsed_ms": 5,
+      "body": {
+        "ok": true,
+        "scanned": 4,
+        "alerts": [
+          {
+            "level": "critical",
+            "rule": "max_drawdown_breach",
+            "message": "策略 BTC 动量突破(BTCUSDT) 回撤 8.20% 超过阈值 5.00%",
+            "symbol": "BTCUSDT",
+            "metric": "drawdown",
+            "value": 0.082,
+            "threshold": 0.05,
+            "id": null,
+            "acknowledged": false,
+            "created_at": "2026-07-11T09:55:49.408365"
+          },
+          {
+            "level": "critical",
+            "rule": "max_drawdown_breach",
+            "message": "策略 ETH 均值回归(ETHUSDT) 回撤 5.40% 超过阈值 5.00%",
+            "symbol": "ETHUSDT",
+            "metric": "drawdown",
+            "value": 0.054,
+            "threshold": 0.05,
+            "id": null,
+            "acknowledged": false,
+            "created_at": "2026-07-11T09:55:49.408378"
+          },
+          {
+            "level": "warning",
+            "rule": "warning_drawdown_breach",
+            "message": "策略 SOL 网格套利(SOLUSDT) 回撤 3.10% 逼近阈值 3.00%",
+            "symbol": "SOLUSDT",
+            "metric": "drawdown",
+            "value": 0.031,
+            "threshold": 0.03,
+            "id": null,
+            "acknowledged": false,
+            "created_at": "2026-07-11T09:55:49.408385"
+          },
+          {
+            "level": "critical",
+            "rule": "max_drawdown_breach",
+            "message": "策略 DOGE 趋势跟踪(DOGEUSDT) 回撤 15.60% 超过阈值 5.00%",
+            "symbol": "DOGEUSDT",
+            "metric": "drawdown",
+            "value": 0.156,
+            "threshold": 0.05,
+            "id": null,
+            "acknowledged": false,
+            "created_at": "2026-07-11T09:55:49.408390"
+          }
+        ]
+      }
+    },
+    {
+      "step": "submit_trade",
+      "method": "POST",
+      "path": "/api/trades",
+      "ts": "2026-07-11T09:55:49.408862+00:00",
+      "status": 201,
+      "elapsed_ms": 11,
+      "body": {
+        "id": "trade-baadbc6829",
+        "strategy_id": "strat-a5474d12",
+        "order_id": "AQ-00000001-b8ee78",
+        "symbol": "BTCUSDT",
+        "side": "buy",
+        "qty": 0.01,
+        "price": 67000.05,
+        "pnl": 0.0,
+        "status": "filled",
+        "created_at": "2026-07-11T09:55:49"
+      }
+    },
+    {
+      "step": "dashboard",
+      "method": "GET",
+      "path": "/api/dashboard",
+      "ts": "2026-07-11T09:55:49.420796+00:00",
+      "status": 200,
+      "elapsed_ms": 22,
+      "body": {
+        "total_pnl": 867.04,
+        "daily_pnl": 298.58,
+        "total_strategies": 6,
+        "active_strategies": 4,
+        "total_trades": 31,
+        "win_rate": 0.6129,
+        "sharpe": 0.95,
+        "drawdown": 0.1912,
+        "agents": [
+          {
+            "id": "chief",
+            "role": "chief",
+            "name": "首席交易员",
+            "emoji": "🎩",
+            "color": "#00b894",
+            "position": {
+              "x": 640,
+              "y": 360
+            },
+            "status": "idle",
+            "metrics": {},
+            "current_task": null,
+            "updated_at": "2026-07-11T09:55:49.442654"
+          },
+          {
+            "id": "data",
+            "role": "data",
+            "name": "数据分析师",
+            "emoji": "📊",
+            "color": "#74b9ff",
+            "position": {
+              "x": 240,
+              "y": 360
+            },
+            "status": "idle",
+            "metrics": {},
+            "current_task": null,
+            "updated_at": "2026-07-11T09:55:49.442669"
+          },
+          {
+            "id": "strategy",
+            "role": "strategy",
+            "name": "策略研究员",
+            "emoji": "📈",
+            "color": "#e17055",
+            "position": {
+              "x": 360,
+              "y": 520
+            },
+            "status": "idle",
+            "metrics": {},
+            "current_task": null,
+            "updated_at": "2026-07-11T09:55:49.442675"
+          },
+          {
+            "id": "risk",
+            "role": "risk",
+            "name": "风控官",
+            "emoji": "🛡️",
+            "color": "#ff7675",
+            "position": {
+              "x": 920,
+              "y": 520
+            },
+            "status": "idle",
+            "metrics": {},
+            "current_task": null,
+            "updated_at": "2026-07-11T09:55:49.442679"
+          },
+          {
+            "id": "execution",
+            "role": "execution",
+            "name": "执行交易员",
+            "emoji": "⚡",
+            "color": "#a29bfe",
+            "position": {
+              "x": 1040,
+              "y": 360
+            },
+            "status": "idle",
+            "metrics": {},
+            "current_task": null,
+            "updated_at": "2026-07-11T09:55:49.442683"
+          },
+          {
+            "id": "report",
+            "role": "report",
+            "name": "报告专员",
+            "emoji": "📝",
+            "color": "#fdcb6e",
+            "position": {
+              "x": 640,
+              "y": 600
+            },
+            "status": "idle",
+            "metrics": {},
+            "current_task": null,
+            "updated_at": "2026-07-11T09:55:49.442687"
+          }
+        ],
+        "recent_alerts": [
+          {
+            "id": "alert-5d5284598b",
+            "level": "critical",
+            "rule": "max_drawdown_breach",
+            "message": "策略 DOGE 趋势跟踪(DOGEUSDT) 回撤 15.60% 超过阈值 5.00%",
+            "symbol": "DOGEUSDT",
+            "metric": "drawdown",
+            "value": 0.156,
+            "threshold": 0.05,
+            "acknowledged": false,
+            "created_at": "2026-07-11T09:55:49"
+          },
+          {
+            "id": "alert-9312b768c3",
+            "level": "warning",
+            "rule": "warning_drawdown_breach",
+            "message": "策略 SOL 网格套利(SOLUSDT) 回撤 3.10% 逼近阈值 3.00%",
+            "symbol": "SOLUSDT",
+            "metric": "drawdown",
+            "value": 0.031,
+            "threshold": 0.03,
+            "acknowledged": false,
+            "created_at": "2026-07-11T09:55:49"
+          },
+          {
+            "id": "alert-915660cfdb",
+            "level": "critical",
+            "rule": "max_drawdown_breach",
+            "message": "策略 ETH 均值回归(ETHUSDT) 回撤 5.40% 超过阈值 5.00%",
+            "symbol": "ETHUSDT",
+            "metric": "drawdown",
+            "value": 0.054,
+            "threshold": 0.05,
+            "acknowledged": false,
+            "created_at": "2026-07-11T09:55:48"
+          },
+          {
+            "id": "alert-e70cb72261",
+            "level": "critical",
+            "rule": "max_drawdown_breach",
+            "message": "策略 BTC 动量突破(BTCUSDT) 回撤 8.20% 超过阈值 5.00%",
+            "symbol": "BTCUSDT",
+            "metric": "drawdown",
+            "value": 0.082,
+            "threshold": 0.05,
+            "acknowledged": false,
+            "created_at": "2026-07-11T09:55:48"
+          },
+          {
+            "id": "alert-3851fb4582",
+            "level": "critical",
+            "rule": "max_drawdown_breach",
+            "message": "策略 DOGE 趋势跟踪(DOGEUSDT) 回撤 15.60% 超过阈值 5.00%",
+            "symbol": "DOGEUSDT",
+            "metric": "drawdown",
+            "value": 0.156,
+            "threshold": 0.05,
+            "acknowledged": false,
+            "created_at": "2026-07-11T09:55:40"
+          }
+        ],
+        "equity_curve": [
+          {
+            "date": "2025-07-05",
+            "equity": 99728.61
+          },
+          {
+            "date": "2025-07-09",
+            "equity": 97548.19
+          },
+          {
+            "date": "2025-07-13",
+            "equity": 97550.57
+          },
+          {
+            "date": "2025-07-17",
+            "equity": 103173.79
+          },
+          {
+            "date": "2025-07-21",
+            "equity": 99971.5
+          },
+          {
+            "date": "2025-07-25",
+            "equity": 100793.67
+          },
+          {
+            "date": "2025-07-29",
+            "equity": 100323.41
+          },
+          {
+            "date": "2025-08-02",
+            "equity": 102617.35
+          },
+          {
+            "date": "2025-08-06",
+            "equity": 104573.44
+          },
+          {
+            "date": "2025-08-10",
+            "equity": 99458.61
+          },
+          {
+            "date": "2025-08-14",
+            "equity": 109781.67
+          },
+          {
+            "date": "2025-08-18",
+            "equity": 104829.37
+          },
+          {
+            "date": "2025-08-22",
+            "equity": 101888.07
+          },
+          {
+            "date": "2025-08-26",
+            "equity": 103485.74
+          },
+          {
+            "date": "2025-08-30",
+            "equity": 102168.86
+          },
+          {
+            "date": "2025-09-03",
+            "equity": 101098.91
+          },
+          {
+            "date": "2025-09-07",
+            "equity": 100091.05
+          },
+          {
+            "date": "2025-09-11",
+            "equity": 109426.93
+          },
+          {
+            "date": "2025-09-16",
+            "equity": 111698.28
+          },
+          {
+            "date": "2025-09-20",
+            "equity": 112989.64
+          },
+          {
+            "date": "2025-09-24",
+            "equity": 108535.93
+          },
+          {
+            "date": "2025-09-28",
+            "equity": 107972.16
+          },
+          {
+            "date": "2025-10-02",
+            "equity": 108815.37
+          },
+          {
+            "date": "2025-10-06",
+            "equity": 103357.94
+          },
+          {
+            "date": "2025-10-10",
+            "equity": 106960.95
+          },
+          {
+            "date": "2025-10-14",
+            "equity": 111659.29
+          },
+          {
+            "date": "2025-10-18",
+            "equity": 116632.83
+          },
+          {
+            "date": "2025-10-22",
+            "equity": 109277.42
+          },
+          {
+            "date": "2025-10-26",
+            "equity": 113342.84
+          },
+          {
+            "date": "2025-10-30",
+            "equity": 120775.62
+          },
+          {
+            "date": "2025-11-03",
+            "equity": 118777.92
+          },
+          {
+            "date": "2025-11-07",
+            "equity": 111590.03
+          },
+          {
+            "date": "2025-11-11",
+            "equity": 119688.93
+          },
+          {
+            "date": "2025-11-15",
+            "equity": 113923.17
+          },
+          {
+            "date": "2025-11-19",
+            "equity": 106538.13
+          },
+          {
+            "date": "2025-11-23",
+            "equity": 109690.14
+          },
+          {
+            "date": "2025-11-28",
+            "equity": 123691.7
+          },
+          {
+            "date": "2025-12-02",
+            "equity": 112776.55
+          },
+          {
+            "date": "2025-12-06",
+            "equity": 114873.62
+          },
+          {
+            "date": "2025-12-10",
+            "equity": 105796.51
+          },
+          {
+            "date": "2025-12-14",
+            "equity": 126296.38
+          },
+          {
+            "date": "2025-12-18",
+            "equity": 124855.29
+          },
+          {
+            "date": "2025-12-22",
+            "equity": 114627.98
+          },
+          {
+            "date": "2025-12-26",
+            "equity": 126848.01
+          },
+          {
+            "date": "2025-12-30",
+            "equity": 128064.97
+          },
+          {
+            "date": "2026-01-03",
+            "equity": 128991.37
+          },
+          {
+            "date": "2026-01-07",
+            "equity": 125651.17
+          },
+          {
+            "date": "2026-01-11",
+            "equity": 117277.95
+          },
+          {
+            "date": "2026-01-15",
+            "equity": 128108.05
+          },
+          {
+            "date": "2026-01-19",
+            "equity": 121592.61
+          },
+          {
+            "date": "2026-01-23",
+            "equity": 128615.98
+          },
+          {
+            "date": "2026-01-27",
+            "equity": 128468.37
+          },
+          {
+            "date": "2026-01-31",
+            "equity": 135623.85
+          },
+          {
+            "date": "2026-02-04",
+            "equity": 127707.48
+          },
+          {
+            "date": "2026-02-09",
+            "equity": 140778.18
+          },
+          {
+            "date": "2026-02-13",
+            "equity": 130355.29
+          },
+          {
+            "date": "2026-02-17",
+            "equity": 116918.38
+          },
+          {
+            "date": "2026-02-21",
+            "equity": 120743.0
+          },
+          {
+            "date": "2026-02-25",
+            "equity": 119453.74
+          },
+          {
+            "date": "2026-03-01",
+            "equity": 119517.33
+          },
+          {
+            "date": "2026-03-05",
+            "equity": 135951.55
+          },
+          {
+            "date": "2026-03-09",
+            "equity": 134259.62
+          },
+          {
+            "date": "2026-03-13",
+            "equity": 136455.01
+          },
+          {
+            "date": "2026-03-17",
+            "equity": 110370.52
+          },
+          {
+            "date": "2026-03-21",
+            "equity": 130480.95
+          },
+          {
+            "date": "2026-03-25",
+            "equity": 123319.7
+          },
+          {
+            "date": "2026-03-29",
+            "equity": 129615.81
+          },
+          {
+            "date": "2026-04-02",
+            "equity": 130090.78
+          },
+          {
+            "date": "2026-04-06",
+            "equity": 110674.97
+          },
+          {
+            "date": "2026-04-10",
+            "equity": 137695.4
+          },
+          {
+            "date": "2026-04-14",
+            "equity": 124275.18
+          },
+          {
+            "date": "2026-04-18",
+            "equity": 130350.9
+          },
+          {
+            "date": "2026-04-23",
+            "equity": 129579.6
+          },
+          {
+            "date": "2026-04-27",
+            "equity": 129887.62
+          },
+          {
+            "date": "2026-05-01",
+            "equity": 126360.02
+          },
+          {
+            "date": "2026-05-05",
+            "equity": 129499.67
+          },
+          {
+            "date": "2026-05-09",
+            "equity": 127763.24
+          },
+          {
+            "date": "2026-05-13",
+            "equity": 156831.02
+          },
+          {
+            "date": "2026-05-17",
+            "equity": 129006.8
+          },
+          {
+            "date": "2026-05-21",
+            "equity": 125219.05
+          },
+          {
+            "date": "2026-05-25",
+            "equity": 132228.98
+          },
+          {
+            "date": "2026-05-29",
+            "equity": 153270.73
+          },
+          {
+            "date": "2026-06-02",
+            "equity": 151250.05
+          },
+          {
+            "date": "2026-06-06",
+            "equity": 125213.4
+          },
+          {
+            "date": "2026-06-10",
+            "equity": 128213.36
+          },
+          {
+            "date": "2026-06-14",
+            "equity": 127861.47
+          },
+          {
+            "date": "2026-06-18",
+            "equity": 123405.37
+          },
+          {
+            "date": "2026-06-22",
+            "equity": 141267.21
+          },
+          {
+            "date": "2026-06-26",
+            "equity": 165030.84
+          },
+          {
+            "date": "2026-06-30",
+            "equity": 161386.16
+          },
+          {
+            "date": "2026-07-05",
+            "equity": 138640.0
+          }
+        ],
+        "total_backtests": 4,
+        "total_alerts": 5,
+        "total_reports": 1
+      }
+    }
+  ],
+  "summary": {
+    "total_steps": 9,
+    "ok": 9,
+    "failed": 0,
+    "total_elapsed_ms": 4895,
+    "engine": {
+      "axon_available": true,
+      "using_axon": true,
+      "using_exchange": false,
+      "exchange_venue": null,
+      "exchange_testnet": true
+    },
+    "data": {
+      "source": "exchange",
+      "bars": 120,
+      "symbol": "BTCUSDT",
+      "timeframe": "1h"
+    },
+    "rl_train": {
+      "backend": "heuristic",
+      "episodes": 4,
+      "avg_reward": -125.39052805837127,
+      "avg_return": -0.018345174703963858,
+      "sharpe": 0.0,
+      "win_rate": 0.0
+    },
+    "trade": {
+      "status": "filled",
+      "symbol": "BTCUSDT",
+      "side": "buy",
+      "qty": 0.01,
+      "price": 67000.05
+    },
+    "dashboard": {
+      "total_strategies": 6,
+      "active_strategies": 4,
+      "total_trades": 31,
+      "win_rate": 0.6129,
+      "total_pnl": 867.04,
+      "total_alerts": 5,
+      "axon_engine": null
+    }
+  },
+  "ts_end": "2026-07-11T09:55:49.443664+00:00"
+}
