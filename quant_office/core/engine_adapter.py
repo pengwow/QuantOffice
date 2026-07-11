@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import math
+import os
 import random
 import time
 import uuid
@@ -262,6 +263,106 @@ class _AxonRiskEngine:
         self.max_var = settings.risk_max_var
 
 
+class _AxonExchangeOMS:
+    """使用 ``axon_quant.BinanceAdapter`` 真接交易所的下单模块。
+
+    需要环境变量 ``BINANCE_API_KEY`` / ``BINANCE_API_SECRET`` 才启用；
+    否则构造返回 None,由调度器降级到 ``_AxonOMS``(L1 内部撮合)。
+    """
+
+    def __init__(self, testnet: bool = True) -> None:
+        import os
+
+        api_key = os.environ.get("BINANCE_API_KEY")
+        api_secret = os.environ.get("BINANCE_API_SECRET")
+        if not api_key or not api_secret:
+            raise RuntimeError("BINANCE_API_KEY / BINANCE_API_SECRET 未配置")
+        cfg = aq.binance_testnet_config() if testnet else None
+        # 非 testnet 时手搓最小 ExchangeConfig（保留现有 adapter 字段）
+        if cfg is None:
+            from axon_quant.exchange import ExchangeConfig  # type: ignore
+            cfg = ExchangeConfig(
+                api_key=api_key,
+                api_secret=api_secret,
+                testnet=False,
+                exchange_id="binance",
+            )
+        self._adapter = aq.BinanceAdapter(cfg)
+        self._connected = False
+        self._testnet = testnet
+
+    @property
+    def venue(self) -> str:
+        return "binance"
+
+    @property
+    def testnet(self) -> bool:
+        return self._testnet
+
+    def connect(self) -> None:
+        if not self._connected:
+            self._adapter.connect()
+            self._connected = True
+
+    def disconnect(self) -> None:
+        if self._connected:
+            try:
+                self._adapter.disconnect()
+            except Exception:
+                pass
+            self._connected = False
+
+    def test_connection(self) -> Dict[str, Any]:
+        try:
+            self.connect()
+            info = self._adapter.get_account_info()
+            return {
+                "ok": True,
+                "venue": self.venue,
+                "testnet": self._testnet,
+                "info": str(info),
+            }
+        except Exception as exc:
+            return {"ok": False, "venue": self.venue, "testnet": self._testnet, "error": str(exc)}
+
+    def place(self, order: OrderRequest) -> OrderResult:
+        """真实交易所下单（同步 IO,调用方用 ``asyncio.to_thread`` 包装）。"""
+        self.connect()
+        order_dict: Dict[str, Any] = {
+            "symbol": order.symbol,
+            "side": order.side.lower(),
+            "type": order.order_type.lower() if order.order_type else "market",
+            "quantity": float(order.quantity),
+        }
+        if order.order_type and order.order_type.lower() == "limit" and order.price is not None:
+            order_dict["price"] = float(order.price)
+            order_dict["timeInForce"] = "GTC"
+        try:
+            resp = self._adapter.place_order(order_dict)
+        except Exception as exc:
+            return OrderResult(
+                order_id="",
+                status="rejected",
+                symbol=order.symbol,
+                side=order.side,
+                quantity=order.quantity,
+                reason=f"exchange 拒单: {exc}",
+            )
+        # resp 通常是 dict: {orderId, status, executedQty, price, ...}
+        oid = str(resp.get("orderId", "") if isinstance(resp, dict) else getattr(resp, "order_id", ""))
+        status = str(resp.get("status", "submitted") if isinstance(resp, dict) else getattr(resp, "status", "submitted"))
+        qty = float(resp.get("executedQty", order.quantity) if isinstance(resp, dict) else getattr(resp, "executed_qty", order.quantity))
+        price = float(resp.get("price", order.price or 0.0) if isinstance(resp, dict) else getattr(resp, "price", order.price or 0.0))
+        return OrderResult(
+            order_id=oid,
+            status="filled" if status.lower() in ("filled", "closed", "new") else "submitted",
+            symbol=order.symbol,
+            side=order.side,
+            quantity=qty,
+            filled_price=price,
+        )
+
+
 class _AxonOMS:
     """使用 axon_quant.L1MatchingEngine 做撮合的轻量 OMS。"""
 
@@ -337,9 +438,13 @@ class AxonQuantAdapter:
     def __init__(self, settings: Optional[Settings] = None) -> None:
         self.settings = settings or get_settings()
         self.using_axon = False
+        self.using_exchange = False
+        self.exchange_venue: Optional[str] = None
+        self.exchange_testnet: bool = True
         self._risk_engine: Any = None
         self._oms: Any = None
         self._exchange: Any = None
+        self._exchange_oms: Any = None
         self._init_engine()
 
     # ---- 初始化 ----
@@ -362,6 +467,27 @@ class AxonQuantAdapter:
             self._risk_engine = _FallbackRiskEngine(self.settings)
             self._oms = _FallbackOMS()
             self._exchange = _FallbackExchange()
+            return
+
+        # 可选：尝试真接交易所(有 API key 时)
+        if os.environ.get("BINANCE_API_KEY") and os.environ.get("BINANCE_API_SECRET"):
+            try:
+                self._exchange_oms = _AxonExchangeOMS(testnet=True)
+                self.using_exchange = True
+                self.exchange_venue = self._exchange_oms.venue
+                self.exchange_testnet = self._exchange_oms.testnet
+                logger.info("交易所 OMS 已启用 venue=%s testnet=%s", self.exchange_venue, self.exchange_testnet)
+            except Exception as exc:  # pragma: no cover
+                logger.warning("交易所 OMS 初始化失败，沿用 L1 撮合: %s", exc)
+                self._exchange_oms = None
+
+    def test_exchange_connection(self) -> Dict[str, Any]:
+        """检测交易所 OMS 是否可用,返回 {ok, venue, testnet, error}。"""
+        if not AXON_AVAILABLE:
+            return {"ok": False, "error": "axon_quant 未安装"}
+        if self._exchange_oms is None:
+            return {"ok": False, "error": "未配置 BINANCE_API_KEY / BINANCE_API_SECRET"}
+        return self._exchange_oms.test_connection()
 
     # ---- 公共 API ----
 
@@ -380,7 +506,7 @@ class AxonQuantAdapter:
     async def submit_order(
         self, order: OrderRequest, portfolio: Portfolio
     ) -> OrderResult:
-        """提交订单（先风控再 OMS）。"""
+        """提交订单（先风控再 OMS）。交易所 OMS 可用时优先走真下单。"""
         check = self.pre_trade_check(order, portfolio)
         if not check.passed:
             return OrderResult(
@@ -390,6 +516,11 @@ class AxonQuantAdapter:
                 side=order.side,
                 quantity=order.quantity,
                 reason=check.message or check.failed_check,
+            )
+        if self._exchange_oms is not None:
+            # BinanceAdapter 是同步 IO,丢到默认 executor 不阻塞事件循环
+            return await asyncio.get_event_loop().run_in_executor(
+                None, self._exchange_oms.place, order
             )
         return await self._oms.submit(order)
 
