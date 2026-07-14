@@ -52,6 +52,7 @@ WITH_AXON=0
 WITH_RL=0
 SKIP_FRONTEND=0
 SKIP_E2E=0
+LOW_MEM=0
 E2E_BASE=""  # 默认拼 http://127.0.0.1:$PORT
 
 # 颜色（CI=true 时自动关闭）
@@ -238,6 +239,18 @@ check_port_free() {
     return 0
 }
 
+# 探测可用内存(GB,两位小数);Linux 读 /proc/meminfo,失败返回空串
+detect_memory_gb() {
+    if [[ -r /proc/meminfo ]]; then
+        awk '/MemAvailable:/ {printf "%.2f", $2/1024/1024}' /proc/meminfo
+    fi
+}
+
+# mem_lt <gb> <threshold>:浮点比较,避免依赖 bc(用 awk 做)
+mem_lt() {
+    awk -v m="${1:-0}" -v t="${2:-0}" 'BEGIN{exit !(m+0 < t+0)}'
+}
+
 # -----------------------------------------------------------------------------
 # 子命令: env
 # -----------------------------------------------------------------------------
@@ -255,12 +268,14 @@ cmd_env() {
     local mem_gb
     mem_gb="$(detect_memory_gb)"
     if [[ -n "$mem_gb" ]]; then
-        if (( $(echo "$mem_gb < 1.5" | bc -l 2>/dev/null || echo 0) )); then
+        if mem_lt "$mem_gb" 1.5; then
             warn "[mem] ${mem_gb}G 可用 — 低内存机器,建议 ./deploy.sh install --skip-frontend 然后用 Vite dev 模式"
             LOW_MEM=1
         else
             ok "[mem] ${mem_gb}G 可用"
         fi
+    else
+        warn "[mem] 无法探测可用内存(无 /proc/meminfo)"
     fi
 
     if [[ $fail -ne 0 ]]; then
@@ -302,7 +317,7 @@ cmd_install() {
             # 限制 Node 堆内存到 512M,显著降低被杀概率
             local mem_gb
             mem_gb="$(detect_memory_gb)"
-            if [[ $LOW_MEM -eq 1 ]] || { [[ -n "$mem_gb" ]] && (( $(echo "$mem_gb < 2.0" | bc -l 2>/dev/null || echo 0) )); }; then
+            if [[ $LOW_MEM -eq 1 ]] || { [[ -n "$mem_gb" ]] && mem_lt "$mem_gb" 2.0; }; then
                 warn "[low-mem] 检测到 ${mem_gb:-?}G 可用,Vite 限制堆内存到 512M"
                 warn "[low-mem] 如果还卡住,直接 Ctrl+C 然后跑: ./deploy.sh install --skip-frontend"
                 warn "[low-mem] 再用 'cd frontend && bun run dev' 走 Vite 开发模式(HMR 即时刷新)"
