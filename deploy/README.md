@@ -141,17 +141,28 @@ panic(main thread): Illegal instruction at address 0x4001FB4
 oh no: Bun has crashed. ...
 ```
 
-**修复**: wrapper 脚本启动时探测 `/proc/cpuinfo` 里的 `avx2` flag，没有就自动从 [oven-sh/bun releases](https://github.com/oven-sh/bun/releases) 下载 `bun-linux-x64-baseline.zip`（去掉 SIMD 优化，普通 x86_64 都能跑），装到 `/opt/quantoffice/bun/`，全程无需人工干预。
+**注意**: bun 1.3+ 的 `*baseline.zip` 版本(自报 `Features: no_avx2 no_avx`)**仍会** panic — jsc 内核在 baseline build 里仍硬编码了部分 AVX 指令。所以 baseline 不是终极方案。
+
+**修复**: wrapper 脚本 `deploy/scripts/start-frontend-dev.sh` 现在**优先用 node 跑 vite**(node 18+ 无 SIMD 要求,稳),fallback 才走 bun:
+
+1. `find_node()` 探测 PATH / nvm / 常见安装点
+2. 找到 node → `exec node ./node_modules/vite/bin/vite.js`(绕开 bun)
+3. 找不到 node → 打 warn 后退化到 `bun --bun run dev`(可能仍 SIGILL,但用户至少能自己再装 node)
 
 **手动验证**:
 
 ```bash
 # 看 CPU 有没有 avx2
 grep -E '(^| )avx2( |$)' /proc/cpuinfo | head -1
-# 没输出 → 1H1G 廉价 VPS 典型场景,需要 baseline bun
+# 没输出 → 1H1G 廉价 VPS 典型场景,需要用 node 而非 bun
+
+# 看有没有 node
+which node && node --version
+# 没装:curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
+#      sudo apt install -y nodejs
 ```
 
-**强制用某个 bun 版本**: 在 supervisor `environment` 里加：
+**强制用某个 bun 版本**: 在 supervisor `environment` 里加(只在没 node 时生效):
 
 ```ini
 BUN_VERSION="1.3.6"          # 想要的 bun 版本
