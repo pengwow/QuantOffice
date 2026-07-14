@@ -101,6 +101,7 @@ ${C_BOLD}通用选项:${C_RESET}
   --with-rl          uv sync --extra rl
   --skip-frontend    install 时跳过前端 bun install / build
   --skip-e2e         all / install 时不强制 e2e
+  --low-mem          强制低内存模式(限制 Vite/Node 堆内存,适合 1H1G)
   -h, --help         打印帮助
 
 ${C_BOLD}示例:${C_RESET}
@@ -127,6 +128,7 @@ while [[ $# -gt 0 ]]; do
         --with-rl)         WITH_RL=1; shift ;;
         --skip-frontend)   SKIP_FRONTEND=1; shift ;;
         --skip-e2e)        SKIP_E2E=1; shift ;;
+        --low-mem)         LOW_MEM=1; shift ;;
         -h|--help)         usage; exit 0 ;;
         *) die "未知参数: $1（用 $SCRIPT_NAME help 查看用法）" ;;
     esac
@@ -249,6 +251,18 @@ cmd_env() {
     ensure_bun || fail=1
     check_port_free "$PORT" || fail=1
 
+    # 内存检测(1H1G 机器友好性)
+    local mem_gb
+    mem_gb="$(detect_memory_gb)"
+    if [[ -n "$mem_gb" ]]; then
+        if (( $(echo "$mem_gb < 1.5" | bc -l 2>/dev/null || echo 0) )); then
+            warn "[mem] ${mem_gb}G 可用 — 低内存机器,建议 ./deploy.sh install --skip-frontend 然后用 Vite dev 模式"
+            LOW_MEM=1
+        else
+            ok "[mem] ${mem_gb}G 可用"
+        fi
+    fi
+
     if [[ $fail -ne 0 ]]; then
         die "环境检查未通过（详见上方 [FAIL]）"
     fi
@@ -275,6 +289,7 @@ cmd_install() {
     # ---- 前端 ----
     if [[ $SKIP_FRONTEND -eq 1 ]]; then
         warn "已 --skip-frontend，跳过前端安装 / 构建"
+        warn "前端请用 dev 模式: cd frontend && bun run dev (Vite :5173 自动代理 :$PORT)"
     else
         title "前端依赖 (bun install)"
         if [[ ! -d frontend ]]; then
@@ -283,6 +298,16 @@ cmd_install() {
             (cd frontend && bun install)
 
             title "前端构建 (bun run build)"
+            # 低内存机器:Vite/Rollup 在 transforming 阶段容易 OOM 卡死
+            # 限制 Node 堆内存到 512M,显著降低被杀概率
+            local mem_gb
+            mem_gb="$(detect_memory_gb)"
+            if [[ $LOW_MEM -eq 1 ]] || { [[ -n "$mem_gb" ]] && (( $(echo "$mem_gb < 2.0" | bc -l 2>/dev/null || echo 0) )); }; then
+                warn "[low-mem] 检测到 ${mem_gb:-?}G 可用,Vite 限制堆内存到 512M"
+                warn "[low-mem] 如果还卡住,直接 Ctrl+C 然后跑: ./deploy.sh install --skip-frontend"
+                warn "[low-mem] 再用 'cd frontend && bun run dev' 走 Vite 开发模式(HMR 即时刷新)"
+                export NODE_OPTIONS="--max-old-space-size=512"
+            fi
             (cd frontend && bun run build)
             ok "前端构建产物: frontend/dist/"
         fi
