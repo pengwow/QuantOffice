@@ -46,6 +46,9 @@ quant_office/static/
 *.log
 logs/
 
+# 部署脚本运行时目录（PID 文件等）
+.run/
+
 # IDE
 .vscode/
 .idea/
