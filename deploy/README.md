@@ -82,16 +82,23 @@ sudo supervisorctl tail -f quantoffice-frontend     # 前端日志
 
 ```bash
 # 1. 装一次（拿到 node_modules，不构建）
-cd /workspace/frontend && bun install
-cd /workspace
+cd <PROJECT_ROOT>/frontend && bun install && cd -
 
-# 2. 启前端 dev（supervisor 托管，崩溃自愈）
+# 2. 拷 wrapper + 启前端 dev（supervisor 托管，崩溃自愈）
+sudo mkdir -p /opt/quantoffice/scripts
+sudo cp deploy/scripts/start-frontend-dev.sh /opt/quantoffice/scripts/
+sudo chmod +x /opt/quantoffice/scripts/start-frontend-dev.sh
 sudo cp deploy/supervisor/quantoffice-frontend.conf \
         /etc/supervisor/conf.d/
 sudo supervisorctl reread && sudo supervisorctl update
 sudo supervisorctl start quantoffice-frontend
 
-# 3. 让 nginx 把 / 反代到 Vite（关键！覆盖掉原来的 try_files 静态文件）
+# 3. 如果项目不在 /workspace,改 supervisor 配置里的 PROJECT_ROOT 环境变量
+#    sed -i 's|PROJECT_ROOT="/workspace"|PROJECT_ROOT="<your path>"|' \
+#        /etc/supervisor/conf.d/quantoffice-frontend.conf
+#    sudo supervisorctl reread && sudo supervisorctl update
+
+# 4. 让 nginx 把 / 反代到 Vite（关键！覆盖掉原来的 try_files 静态文件）
 #    编辑 /etc/nginx/conf.d/quantoffice.conf，把 location / 块替换为：
 #
 #    location / {
@@ -107,6 +114,22 @@ sudo nginx -t && sudo systemctl reload nginx
 ```
 
 dev 模式下，`/api` 和 `/ws` 由 Vite 自己代理到后端 8765（见 `vite.config.ts`），不经过 nginx。
+
+### 为什么不用 `bun run dev` 直接跑
+
+老版 bun（< 1.1）的 `bun x vite` 会 fallback 到 Node 的 CJS loader，加载 `vite.js` 第 7 行的 top-level await 时报：
+
+```
+file:///.../frontend/node_modules/vite/bin/vite.js:7
+    await import('source-map-support').then((r) => r.default.install())
+    ^^^^^
+SyntaxError: Unexpected reserved word
+    at Loader.moduleStrategy (internal/modules/esm/translators.js:133:18)
+```
+
+`internal/modules/esm/translators.js` 是 **Node.js** 内部路径，说明 `bun` 没在用 bun runtime。
+
+**修复**: `deploy/scripts/start-frontend-dev.sh` 强制用 `bun --bun run dev`，`--bun` 标志让 bun 整条调用链都用 bun runtime 跑，不会 fallback 到 Node loader。
 
 ## 和 `./deploy.sh` 互斥
 
