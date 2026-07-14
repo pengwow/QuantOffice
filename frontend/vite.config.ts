@@ -16,11 +16,11 @@ export default defineConfig(({ mode }) => ({
     // 代理 FastAPI 后端（CORS 友好）
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000',
+        target: 'http://127.0.0.1:8765',
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://127.0.0.1:8000',
+        target: 'ws://127.0.0.1:8765',
         ws: true,
         changeOrigin: true,
       },

@@ -208,7 +208,7 @@ import uvicorn
 def main():
     parser = argparse.ArgumentParser(description="QuantOffice 量化交易指挥中枢")
     parser.add_argument("--host", default="0.0.0.0", help="监听地址")
-    parser.add_argument("--port", type=int, default=8000, help="监听端口")
+    parser.add_argument("--port", type=int, default=8765, help="监听端口")
     parser.add_argument("--reload", action="store_true", help="开发模式热重载")
     args = parser.parse_args()
 
@@ -639,7 +639,7 @@ async def get_agent_logs(agent_id: str, limit: int = 100):
 
 | 维度 | 独立运行模式 | QuantCell 插件模式 |
 |------|-------------|-------------------|
-| **启动方式** | `python run.py --port 8000` | 放入 `backend/plugins/quant-office/`，QuantCell 自动扫描加载 |
+| **启动方式** | `python run.py --port 8765` | 放入 `backend/plugins/quant-office/`，QuantCell 自动扫描加载 |
 | **入口文件** | `quant_office/app.py` | `quant_office/plugin.py` |
 | **API 前缀** | `/api/agents` | `/api/plugins/quant-office/agents` |
 | **WebSocket** | `/ws` | `/api/plugins/quant-office/ws` |
@@ -668,7 +668,7 @@ signal on_config_loaded(config)
 
 # API 前缀：根据运行模式动态确定
 var api_prefix: String = "/api"
-var ws_url: String = "ws://localhost:8000/ws"
+var ws_url: String = "ws://localhost:8765/ws"
 
 func _ready():
     # 从 JavaScript 环境读取运行模式
@@ -719,7 +719,7 @@ cd quantoffice
 uv sync
 
 # 3. 启动独立后端（热重载）
-python run.py --port 8000 --reload
+python run.py --port 8765 --reload
 
 # 4. 安装前端依赖
 cd frontend

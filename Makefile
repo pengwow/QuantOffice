@@ -21,7 +21,7 @@ run:  ## 启动 FastAPI 后端
 	uv run python run.py
 
 dev:  ## 启动开发服务器（热重载）
-	uv run python run.py --reload --port 8000
+	uv run python run.py --reload --port 8765
 
 test:  ## 运行后端测试
 	uv run pytest -v
@@ -60,7 +60,7 @@ fe-preview:  ## 预览生产构建
 
 # ==================== 一键全栈开发 ====================
 dev-all:  ## 同时启动后端 + 前端（需要安装 tmux 或两个终端）
-	@echo "Terminal 1: make dev         (FastAPI :8000)"
+	@echo "Terminal 1: make dev         (FastAPI :8765)"
 	@echo "Terminal 2: make fe-dev      (Vite    :5173)"
 
 clean:  ## 清理所有缓存

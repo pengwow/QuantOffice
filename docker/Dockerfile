@@ -29,9 +29,9 @@ RUN uv sync --no-dev --frozen
 RUN mkdir -p /app/data
 ENV QUANT_OFFICE_DATA_DIR=/app/data
 
-EXPOSE 8000
+EXPOSE 8765
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/api/health || exit 1
+    CMD curl -f http://localhost:8765/api/health || exit 1
 
-CMD ["python", "run.py", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "run.py", "--host", "0.0.0.0", "--port", "8765"]

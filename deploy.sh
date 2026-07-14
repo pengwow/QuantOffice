@@ -17,7 +17,7 @@
 # 用法：
 #   ./deploy.sh all                 # 一键全流程
 #   ./deploy.sh install --with-rl   # 安装并加装 RL 扩展
-#   ./deploy.sh start --port 8000   # 自定义端口
+#   ./deploy.sh start --port 8765   # 自定义端口
 #   ./deploy.sh stop
 #   ./deploy.sh restart
 #   ./deploy.sh status
@@ -47,7 +47,7 @@ LOG_FILE="$LOGS_DIR/backend.log"
 
 # 服务默认值（可用 CLI 覆盖）
 HOST="0.0.0.0"
-PORT="8000"
+PORT="8765"
 WITH_AXON=0
 WITH_RL=0
 SKIP_FRONTEND=0
@@ -95,7 +95,7 @@ ${C_BOLD}命令:${C_RESET}
   help         打印本帮助
 
 ${C_BOLD}通用选项:${C_RESET}
-  --port PORT        监听端口（默认 8000）
+  --port PORT        监听端口（默认 8765）
   --host HOST        监听地址（默认 0.0.0.0）
   --with-axon        uv sync --extra axon
   --with-rl          uv sync --extra rl
