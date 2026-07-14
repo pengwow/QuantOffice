@@ -7,7 +7,7 @@ services:
       dockerfile: docker/Dockerfile
     container_name: quant-office
     ports:
-      - "8000:8000"
+      - "8765:8765"
     environment:
       - QUANT_OFFICE_LOG_LEVEL=INFO
       - QUANT_OFFICE_AXON_ENABLED=false

@@ -116,15 +116,15 @@ uv sync
 curl -LsSf https://astral.sh/uv/install.sh | sh
 uv python install 3.14
 uv sync --extra axon --extra rl --group dev   # 装后端 + axon_quant 引擎 + RL 栈
-uv run python run.py --reload                 # 启动后端 :8000
+uv run python run.py --reload                 # 启动后端 :8765
 
 # 2) 前端（React 18 + Vite + bun）
 curl -fsSL https://bun.sh/install | bash
 cd frontend && bun install                     # 安装前端依赖
-bun run dev                                    # 启动 Vite :5173（自动代理 :8000）
+bun run dev                                    # 启动 Vite :5173（自动代理 :8765）
 
 # 3) 一键 E2E 验证（另起一个终端，需先起后端）
-uv run python scripts/e2e_smoke.py --base http://127.0.0.1:8000
+uv run python scripts/e2e_smoke.py --base http://127.0.0.1:8765
 # → 控制台打印 summary + 落 reports/e2e_<UTC ts>.json
 
 # 打开浏览器
@@ -182,10 +182,10 @@ uv python install 3.14
 uv sync
 
 # 启动后端
-uv run python run.py --host 0.0.0.0 --port 8000 --reload
+uv run python run.py --host 0.0.0.0 --port 8765 --reload
 
 # 访问 API 文档
-open http://localhost:8000/docs
+open http://localhost:8765/docs
 ```
 
 #### 方式二：使用 pip
@@ -205,7 +205,7 @@ pip install -r requirements-dev.txt
 pip install -e "."
 
 # 启动后端
-python run.py --host 0.0.0.0 --port 8000 --reload
+python run.py --host 0.0.0.0 --port 8765 --reload
 ```
 
 #### 可选扩展包
@@ -332,14 +332,14 @@ QuantOffice/
 
 ```bash
 # 1. 起后端（任一终端）
-uv run python run.py --port 8000
+uv run python run.py --port 8765
 
 # 2. 跑 E2E（另起终端）
-uv run python scripts/e2e_smoke.py --base http://127.0.0.1:8000
+uv run python scripts/e2e_smoke.py --base http://127.0.0.1:8765
 
 # 可调参数
 uv run python scripts/e2e_smoke.py \
-    --base http://127.0.0.1:8000 \
+    --base http://127.0.0.1:8765 \
     --symbol BTCUSDT --timeframe 1h --limit 120 --episodes 4
 ```
 

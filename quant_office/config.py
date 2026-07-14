@@ -45,7 +45,7 @@ class Settings(BaseSettings):
 
     # ---- 服务 ----
     host: str = "0.0.0.0"
-    port: int = 8000
+    port: int = 8765
 
     # ---- 路径 ----
     project_root: Path = Field(default_factory=_project_root)
