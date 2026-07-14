@@ -131,6 +131,33 @@ SyntaxError: Unexpected reserved word
 
 **修复**: `deploy/scripts/start-frontend-dev.sh` 强制用 `bun --bun run dev`，`--bun` 标志让 bun 整条调用链都用 bun runtime 跑，不会 fallback 到 Node loader。
 
+### 1H1G 老 CPU：`CPU lacks AVX support` panic
+
+部分便宜 VPS（Intel Atom / 老 Xeon / KVM `kvm64` CPU type）CPU 不带 AVX/AVX2 指令集。bun 官方 release 默认是 `+avx2` 构建，会直接 panic：
+
+```
+CPU lacks AVX support. Please consider upgrading to a newer CPU.
+panic(main thread): Illegal instruction at address 0x4001FB4
+oh no: Bun has crashed. ...
+```
+
+**修复**: wrapper 脚本启动时探测 `/proc/cpuinfo` 里的 `avx2` flag，没有就自动从 [oven-sh/bun releases](https://github.com/oven-sh/bun/releases) 下载 `bun-linux-x64-baseline.zip`（去掉 SIMD 优化，普通 x86_64 都能跑），装到 `/opt/quantoffice/bun/`，全程无需人工干预。
+
+**手动验证**:
+
+```bash
+# 看 CPU 有没有 avx2
+grep -E '(^| )avx2( |$)' /proc/cpuinfo | head -1
+# 没输出 → 1H1G 廉价 VPS 典型场景,需要 baseline bun
+```
+
+**强制用某个 bun 版本**: 在 supervisor `environment` 里加：
+
+```ini
+BUN_VERSION="1.3.6"          # 想要的 bun 版本
+BUN_INSTALL_DIR="/opt/quantoffice/bun"  # 装位置
+```
+
 ## 和 `./deploy.sh` 互斥
 
 `./deploy.sh start` 用 PID 文件管后端；supervisor 接管后两者会冲突，**只用一个**。
