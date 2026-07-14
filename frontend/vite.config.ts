@@ -28,10 +28,15 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     outDir: 'dist',
-    sourcemap: mode !== 'production',
-    target: 'es2022',
+    sourcemap: false,             // 生产构建不产 sourcemap(低内存机器减少 30%+ 内存)
+    target: 'es2020',             // 降一档,减少 esbuild 转译开销
     cssCodeSplit: true,
+    minify: 'esbuild',            // esbuild minify 比 terser 内存友好得多
+    chunkSizeWarningLimit: 1500,
+    reportCompressedSize: false, // 关闭 gzip 二次测量(默认开,会再跑一遍,1G 内存会爆)
     rollupOptions: {
+      // 1H1G 机器:限制 Rollup 并发,降低峰值内存
+      maxParallelFileOps: 2,
       output: {
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'],
