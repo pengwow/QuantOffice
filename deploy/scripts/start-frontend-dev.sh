@@ -8,14 +8,17 @@
 #        `await import('source-map-support')` 报
 #        "SyntaxError: Unexpected reserved word"
 #    根因: 老版 bun(< 1.1)的 `bun x` fallback 到 Node CJS loader
-#    修复: 强制 `bun --bun run dev`
+#    修复: 强制 `bun --bun run dev`(PR #18)
 #
-# 2) bun 1.3.6 在没有 AVX/AVX2 的 CPU 上 panic
-#        "CPU lacks AVX support ... panic ... Illegal instruction"
-#    根因: 1H1G 廉价服务器常用老 Intel Atom / Xeon,CPU 没 AVX
-#    而 bun 官方 release 默认是 `+avx2` 构建,baseline 是单独 zip
-#    修复: 探测 /proc/cpuinfo 没 avx2 flag 时,自动下载并切换到
-#          bun-linux-x64-baseline.zip(去掉 SIMD 优化,普通 x86_64 都能跑)
+# 2) bun 1.3.x baseline 版在完全没 AVX 的 CPU 上仍然 panic
+#    "CPU lacks AVX support. Please consider upgrading to a newer CPU.
+#     panic(main thread): Illegal instruction"
+#    根因: bun 1.3+ 的 jsc 内核在 baseline build 里仍硬编码了部分 AVX
+#         指令,即使 CPU 没 avx flag 也会 SIGILL
+#    修复: 优先用 node 跑 vite(本轮 PR #20)
+#         - 探测 node 路径(PATH / nvm / 常见安装点)
+#         - node 18+ 都能跑 vite,无 SIMD 要求
+#         - 没 node 才退化到 bun baseline(并打 warning)
 #
 # 用法: deploy/scripts/start-frontend-dev.sh
 # 装位置: /opt/quantoffice/scripts/start-frontend-dev.sh
@@ -25,123 +28,86 @@ set -euo pipefail
 PROJECT_ROOT="${PROJECT_ROOT:-/workspace/QuantOffice}"
 FRONTEND_DIR="${PROJECT_ROOT}/frontend"
 LOG_PREFIX="[start-frontend-dev]"
-BUN_VERSION="${BUN_VERSION:-1.3.6}"
-BUN_INSTALL_DIR="${BUN_INSTALL_DIR:-/opt/quantoffice/bun}"
-BUN_BIN="$BUN_INSTALL_DIR/bin/bun"
 
 # -----------------------------------------------------------------------------
-# 1. CPU AVX/AVX2 探测
+# 1. CPU AVX/AVX2 探测(信息用,不做硬阻断)
 # -----------------------------------------------------------------------------
 cpu_has_avx2() {
-    # /proc/cpuinfo 读 flags,avx2 在就 echo 1
-    if [[ -r /proc/cpuinfo ]]; then
-        grep -qE '(^| )avx2( |$)' /proc/cpuinfo && return 0
+    if [[ -r /proc/cpuinfo ]] && grep -qE '(^| )avx2( |$)' /proc/cpuinfo; then
+        return 0
     fi
     return 1
 }
 
 # -----------------------------------------------------------------------------
-# 2. 装 baseline 版 bun(如果还没装且 CPU 不支持 AVX2)
+# 2. 找 node(vite 真正需要的 runtime)
 # -----------------------------------------------------------------------------
-install_bun_baseline() {
-    echo "$LOG_PREFIX [INFO] 装 baseline 版 bun(v$BUN_VERSION, 无 AVX 需求)到 $BUN_INSTALL_DIR"
-
-    local tmp_zip
-    tmp_zip="$(mktemp --suffix=.zip)"
-    local url="https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/bun-linux-x64-baseline.zip"
-
-    if ! command -v curl >/dev/null 2>&1; then
-        echo "$LOG_PREFIX [FATAL] 需要 curl 装 bun baseline" >&2
-        exit 127
-    fi
-    if ! command -v unzip >/dev/null 2>&1; then
-        echo "$LOG_PREFIX [FATAL] 需要 unzip 装 bun baseline" >&2
-        exit 127
-    fi
-
-    curl -fsSL -o "$tmp_zip" "$url" \
-        || { echo "$LOG_PREFIX [FATAL] 下载 $url 失败" >&2; rm -f "$tmp_zip"; exit 1; }
-
-    mkdir -p "$BUN_INSTALL_DIR"
-    unzip -oq -d "$BUN_INSTALL_DIR" "$tmp_zip" \
-        || { echo "$LOG_PREFIX [FATAL] 解压 $tmp_zip 失败" >&2; rm -f "$tmp_zip"; exit 1; }
-    rm -f "$tmp_zip"
-
-    chmod +x "$BUN_BIN" 2>/dev/null || true
-    echo "$LOG_PREFIX [OK] baseline bun 装好: $($BUN_BIN --version 2>/dev/null || echo '?')"
-}
-
-# -----------------------------------------------------------------------------
-# 3. 找 / 准备 bun
-# -----------------------------------------------------------------------------
-ensure_bun() {
-    # 优先用我们自己装的 baseline(无 AVX 需求)
-    if [[ -x "$BUN_BIN" ]]; then
-        # sanity check:跑一下 --version,如果 SIGILL 就当它坏了
-        if "$BUN_BIN" --version >/dev/null 2>&1; then
-            return 0
-        else
-            echo "$LOG_PREFIX [WARN] $BUN_BIN 跑不了(可能 SIGILL),重新装 baseline"
-            rm -rf "$BUN_INSTALL_DIR"
-        fi
-    fi
-
-    # 退化:用 PATH 里的 bun(但如果是 AVX 版会在老 CPU 上崩)
-    local path_bun
-    path_bun="$(command -v bun 2>/dev/null || true)"
-    if [[ -n "$path_bun" && -x "$path_bun" ]]; then
-        if "$path_bun" --version >/dev/null 2>&1; then
-            BUN_BIN="$path_bun"
-            echo "$LOG_PREFIX [WARN] 用 PATH 里的 bun: $BUN_BIN(没 avx2 时它会崩,改用 baseline)"
+find_node() {
+    # 优先 PATH
+    local n
+    n="$(command -v node 2>/dev/null || true)"
+    if [[ -n "$n" && -x "$n" ]]; then
+        # 验证 node 能跑(node 没有 SIGILL 问题,跑下 --version)
+        if "$n" --version >/dev/null 2>&1; then
+            echo "$n"
             return 0
         fi
     fi
-
-    # 兜底:扫常见安装路径
+    # nvm: 每个用户目录下的 node
     for candidate in \
-        "$HOME/.bun/bin/bun" \
-        /root/.bun/bin/bun \
-        /home/*/.bun/bin/bun \
-        /opt/bun/bin/bun \
-        /usr/local/bin/bun \
-        /usr/bin/bun
+        "$HOME/.nvm/versions/node/*/bin/node" \
+        /root/.nvm/versions/node/*/bin/node \
+        /home/*/.nvm/versions/node/*/bin/node \
+        /usr/local/bin/node \
+        /usr/bin/node \
+        /opt/node/bin/node
     do
-        if [[ -x "$candidate" ]] && "$candidate" --version >/dev/null 2>&1; then
-            BUN_BIN="$candidate"
-            return 0
-        fi
+        for c in $candidate; do
+            if [[ -x "$c" ]] && "$c" --version >/dev/null 2>&1; then
+                echo "$c"
+                return 0
+            fi
+        done
     done
-
-    # 都找不到,直接装 baseline
-    install_bun_baseline
+    return 1
 }
 
+# -----------------------------------------------------------------------------
+# 3. 找 bun(只在没 node 时用,且 baseline 版仍可能崩)
+# -----------------------------------------------------------------------------
+find_bun() {
+    local candidates=(
+        "$HOME/.bun/bin/bun"
+        /root/.bun/bin/bun
+        /opt/quantoffice/bun/bin/bun
+        /home/*/.bun/bin/bun
+        /opt/bun/bin/bun
+        /usr/local/bin/bun
+        /usr/bin/bun
+    )
+    for c in "${candidates[@]}"; do
+        for cc in $c; do
+            if [[ -x "$cc" ]] && "$cc" --version >/dev/null 2>&1; then
+                echo "$cc"
+                return 0
+            fi
+        done
+    done
+    return 1
+}
+
+# -----------------------------------------------------------------------------
 # 主流程
+# -----------------------------------------------------------------------------
 echo "$LOG_PREFIX 启动 Vite dev wrapper (project=$PROJECT_ROOT)"
 
-# CPU 不支持 avx2 + 还没装 baseline bun → 装
-if ! cpu_has_avx2 && [[ ! -x "$BUN_BIN" ]]; then
-    echo "$LOG_PREFIX [INFO] CPU 不支持 AVX2(常见 1H1G 廉价 VPS)"
-    install_bun_baseline
+if ! cpu_has_avx2; then
+    echo "$LOG_PREFIX [INFO] CPU 不支持 AVX2 — bun 1.3+ baseline 也会 panic,改用 node 跑 vite"
 fi
 
-ensure_bun
-
-# 再次确认 bun 能跑(尤其是 PATH 来的 bun 可能是 AVX 版)
-if ! "$BUN_BIN" --version >/dev/null 2>&1; then
-    echo "$LOG_PREFIX [WARN] 当前 bun 跑不了,改装 baseline"
-    rm -rf "$BUN_INSTALL_DIR"
-    install_bun_baseline
-fi
-
-echo "$LOG_PREFIX 使用 bun: $BUN_BIN ($($BUN_BIN --version))"
-
-# -----------------------------------------------------------------------------
-# 4. 校验 frontend
-# -----------------------------------------------------------------------------
+# 校验 frontend
 if [[ ! -d "$FRONTEND_DIR" ]]; then
-    echo "$LOG_PREFIX [FATAL] 找不到 $FRONTEND_DIR" >&2
-    echo "$LOG_PREFIX 提示: 检查 supervisor 配置里的 PROJECT_ROOT" >&2
+    echo "$LOG_PREFIX [FATAL] 找不到 $FRONTEND_DIR(检查 supervisor 配置里的 PROJECT_ROOT)" >&2
     exit 1
 fi
 if [[ ! -d "$FRONTEND_DIR/node_modules/vite" ]]; then
@@ -150,9 +116,31 @@ if [[ ! -d "$FRONTEND_DIR/node_modules/vite" ]]; then
 fi
 
 # -----------------------------------------------------------------------------
-# 5. 启动 Vite dev
-#    关键: --bun 强制 bun runtime 跑整条 script 链
-#    避免 bun x fallback 到 Node CJS loader 报 "Unexpected reserved word"
+# 4. 选 runtime
+#    优先 node 18+(稳,无 SIMD 要求)
+#    fallback bun --bun(可能 SIGILL,但至少试一下)
 # -----------------------------------------------------------------------------
-cd "$FRONTEND_DIR"
-exec "$BUN_BIN" --bun run dev
+NODE_BIN="$(find_node 2>/dev/null || true)"
+BUN_BIN="$(find_bun 2>/dev/null || true)"
+
+if [[ -n "$NODE_BIN" ]]; then
+    NODE_VER="$("$NODE_BIN" --version 2>/dev/null || echo '?')"
+    echo "$LOG_PREFIX 使用 node: $NODE_BIN ($NODE_VER)"
+
+    cd "$FRONTEND_DIR"
+    # 直接用 node 跑 vite 的 bin 脚本,绕开 bun
+    # vite 5.x 兼容 node 18+
+    exec "$NODE_BIN" ./node_modules/vite/bin/vite.js
+else
+    echo "$LOG_PREFIX [WARN] 没找到 node,退化到 bun"
+    if [[ -z "$BUN_BIN" ]]; then
+        echo "$LOG_PREFIX [FATAL] node 和 bun 都没装,装 node 18+ 后重试" >&2
+        echo "$LOG_PREFIX   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -" >&2
+        echo "$LOG_PREFIX   sudo apt install -y nodejs" >&2
+        exit 127
+    fi
+    BUN_VER="$("$BUN_BIN" --version 2>/dev/null || echo '?')"
+    echo "$LOG_PREFIX 使用 bun: $BUN_BIN ($BUN_VER) — 注意: bun 1.3+ baseline 在没 avx 的 CPU 上仍可能 SIGILL"
+    cd "$FRONTEND_DIR"
+    exec "$BUN_BIN" --bun run dev
+fi
